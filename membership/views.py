@@ -312,7 +312,7 @@ def payment_receipt(request, pk):
 @login_required
 def fee_list(request):
     """List all membership fees"""
-    fees = MembershipFee.objects.all().order_by('membership_type', 'payment_mode')
+    fees = MembershipFee.objects.all().order_by('membership_type', 'payment_frequency')
     
     context = {'fees': fees}
     return render(request, 'membership/fee_list.html', context)
