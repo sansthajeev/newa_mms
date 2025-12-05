@@ -1,0 +1,65 @@
+{% extends 'membership/base.html' %}
+{% block title %}Membership Fees{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-currency-dollar"></i> Membership Fees</h1>
+        <a href="{% url 'membership:fee_add' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Add Fee Structure
+        </a>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Payment Mode</th>
+                            <th>Amount</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fee in fees %}
+                        <tr>
+                            <td>{{ fee.get_membership_type_display }}</td>
+                            <td>{{ fee.get_payment_mode_display }}</td>
+                            <td class="fw-bold text-success">NPR {{ fee.amount }}</td>
+                            <td>{{ fee.description|default:"—"|truncatewords:10 }}</td>
+                            <td>
+                                {% if fee.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'membership:fee_edit' fee.pk %}" class="btn btn-sm btn-warning">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
+                                <a href="{% url 'membership:fee_delete' fee.pk %}" class="btn btn-sm btn-danger">
+                                    <i class="bi bi-trash"></i> Delete
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                                <p class="mt-2">No fee structures defined yet.</p>
+                                <a href="{% url 'membership:fee_add' %}" class="btn btn-primary">
+                                    <i class="bi bi-plus-circle"></i> Add First Fee Structure
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

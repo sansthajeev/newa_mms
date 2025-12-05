@@ -1,0 +1,126 @@
+{% extends 'membership/base.html' %}
+
+{% block title %}Receipt #{{ payment.receipt_number }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    @media print {
+        body { font-size: 12pt; }
+        .receipt-container { max-width: 100%; }
+    }
+    .receipt-container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+    }
+    .receipt-header {
+        text-align: center;
+        border-bottom: 3px solid #333;
+        padding-bottom: 20px;
+        margin-bottom: 30px;
+    }
+    .receipt-info { margin-bottom: 30px; }
+    .receipt-table th { background-color: #f8f9fa; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="receipt-container">
+    <!-- Print Button -->
+    <div class="text-end mb-3 no-print">
+        <button onclick="window.print()" class="btn btn-primary">
+            <i class="bi bi-printer"></i> Print Receipt
+        </button>
+        <a href="{% url 'membership:payment_list' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <!-- Receipt Header -->
+    <div class="receipt-header">
+        <h1 class="mb-0">Newa Samparka Samuha</h1>
+        <p class="text-muted mb-3">Membership Management System</p>
+        <h3 class="text-primary">PAYMENT RECEIPT</h3>
+    </div>
+
+    <!-- Receipt Information -->
+    <div class="row receipt-info">
+        <div class="col-6">
+            <p><strong>Receipt Number:</strong> {{ payment.receipt_number }}</p>
+            <p><strong>Payment Date:</strong> {{ payment.payment_date|date:"F d, Y" }}</p>
+            <p><strong>Payment Mode:</strong> {{ payment.get_payment_mode_display }}</p>
+            {% if payment.transaction_reference %}
+            <p><strong>Transaction Ref:</strong> {{ payment.transaction_reference }}</p>
+            {% endif %}
+        </div>
+        <div class="col-6 text-end">
+            <p><strong>Member:</strong> {{ payment.member.name }}</p>
+            <p><strong>Membership #:</strong> {{ payment.member.membership_number }}</p>
+            <p><strong>Membership Type:</strong> {{ payment.member.get_membership_type_display }}</p>
+            <p><strong>Phone:</strong> {{ payment.member.phone_number }}</p>
+        </div>
+    </div>
+
+    <!-- Payment Details Table -->
+    <table class="table table-bordered receipt-table">
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th>Fee Type</th>
+                <th class="text-end">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    {{ payment.membership_fee.get_membership_type_display }} Membership Fee
+                    {% if payment.remarks %}
+                    <br><small class="text-muted">{{ payment.remarks }}</small>
+                    {% endif %}
+                </td>
+                <td>{{ payment.membership_fee.get_payment_mode_display }}</td>
+                <td class="text-end fw-bold">NPR {{ payment.amount|floatformat:2 }}</td>
+            </tr>
+        </tbody>
+        <tfoot class="table-active">
+            <tr>
+                <th colspan="2" class="text-end">Total Amount:</th>
+                <th class="text-end text-success fs-5">NPR {{ payment.amount|floatformat:2 }}</th>
+            </tr>
+        </tfoot>
+    </table>
+
+    <!-- Additional Information -->
+    <div class="row mt-4">
+        <div class="col-6">
+            {% if payment.collected_by %}
+            <p><strong>Collected By:</strong> {{ payment.collected_by }}</p>
+            {% endif %}
+        </div>
+        <div class="col-6 text-end">
+            <p><strong>Receipt Generated:</strong> {{ print_date|date:"F d, Y h:i A" }}</p>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center mt-5 pt-4" style="border-top: 1px solid #ddd;">
+        <p class="text-muted mb-0">Thank you for your payment!</p>
+        <p class="text-muted">For any queries, please contact our office.</p>
+    </div>
+
+    <!-- Signature Section -->
+    <div class="row mt-5 pt-4">
+        <div class="col-6">
+            <div style="border-top: 1px solid #333; width: 200px;">
+                <p class="text-center mt-2 mb-0"><small>Member Signature</small></p>
+            </div>
+        </div>
+        <div class="col-6 text-end">
+            <div style="border-top: 1px solid #333; width: 200px; float: right;">
+                <p class="text-center mt-2 mb-0"><small>Authorized Signature</small></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

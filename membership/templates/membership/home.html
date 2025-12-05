@@ -1,0 +1,176 @@
+{% extends 'membership/base.html' %}
+
+{% block title %}Dashboard - Newa Samparka Samuha{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mb-4">
+        <i class="bi bi-speedometer2"></i> Dashboard
+    </h1>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card stat-card members">
+                <div class="card-body">
+                    <h6 class="card-subtitle text-muted mb-2">Total Active Members</h6>
+                    <h2 class="card-title mb-0">{{ total_members }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card regular">
+                <div class="card-body">
+                    <h6 class="card-subtitle text-muted mb-2">Regular Members</h6>
+                    <h2 class="card-title mb-0">{{ regular_members }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card lifetime">
+                <div class="card-body">
+                    <h6 class="card-subtitle text-muted mb-2">Lifetime Members</h6>
+                    <h2 class="card-title mb-0">{{ lifetime_members }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card revenue">
+                <div class="card-body">
+                    <h6 class="card-subtitle text-muted mb-2">Total Revenue</h6>
+                    <h2 class="card-title mb-0">NPR {{ total_revenue|floatformat:2 }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Members -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-person-plus"></i> Recent Members</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_members %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Member #</th>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Join Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for member in recent_members %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'membership:member_detail' member.pk %}">
+                                            {{ member.membership_number }}
+                                        </a>
+                                    </td>
+                                    <td>{{ member.name }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if member.membership_type == 'LIFETIME' %}success{% else %}info{% endif %}">
+                                            {{ member.get_membership_type_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ member.join_date|date:"M d, Y" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No members yet.</p>
+                    {% endif %}
+                    <a href="{% url 'membership:member_list' %}" class="btn btn-sm btn-outline-primary">
+                        View All Members <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Payments -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-cash-coin"></i> Recent Payments</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_payments %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Receipt #</th>
+                                    <th>Member</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in recent_payments %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'membership:payment_receipt' payment.pk %}">
+                                            {{ payment.receipt_number }}
+                                        </a>
+                                    </td>
+                                    <td>{{ payment.member.name|truncatewords:3 }}</td>
+                                    <td class="text-success fw-bold">NPR {{ payment.amount|floatformat:2 }}</td>
+                                    <td>{{ payment.payment_date|date:"M d, Y" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No payments yet.</p>
+                    {% endif %}
+                    <a href="{% url 'membership:payment_list' %}" class="btn btn-sm btn-outline-success">
+                        View All Payments <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-lightning-fill"></i> Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <a href="{% url 'membership:member_add' %}" class="btn btn-primary w-100">
+                                <i class="bi bi-person-plus-fill"></i> Add New Member
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'membership:payment_add' %}" class="btn btn-success w-100">
+                                <i class="bi bi-cash-stack"></i> Record Payment
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'membership:revenue_report' %}" class="btn btn-info w-100">
+                                <i class="bi bi-graph-up"></i> View Reports
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'membership:member_list' %}" class="btn btn-warning w-100">
+                                <i class="bi bi-search"></i> Search Members
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

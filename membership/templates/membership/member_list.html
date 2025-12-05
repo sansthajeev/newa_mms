@@ -1,0 +1,107 @@
+{% extends 'membership/base.html' %}
+
+{% block title %}Members List - Newa Samparka Samuha{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-people"></i> Members</h1>
+        <a href="{% url 'membership:member_add' %}" class="btn btn-primary">
+            <i class="bi bi-person-plus"></i> Add New Member
+        </a>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="search" class="form-label">Search</label>
+                    <input type="text" class="form-control" id="search" name="search" 
+                           value="{{ search_query }}" placeholder="Name, Number, Phone, Email">
+                </div>
+                <div class="col-md-3">
+                    <label for="type" class="form-label">Membership Type</label>
+                    <select class="form-select" id="type" name="type">
+                        <option value="">All Types</option>
+                        <option value="REGULAR" {% if membership_type == 'REGULAR' %}selected{% endif %}>Regular</option>
+                        <option value="LIFETIME" {% if membership_type == 'LIFETIME' %}selected{% endif %}>Lifetime</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="status" class="form-label">Status</label>
+                    <select class="form-select" id="status" name="status">
+                        <option value="">All Status</option>
+                        <option value="active" {% if status == 'active' %}selected{% endif %}>Active</option>
+                        <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>Inactive</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Search
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Members Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Members List ({{ members.count }})</h5>
+        </div>
+        <div class="card-body">
+            {% if members %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Membership #</th>
+                            <th>Name</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                            <th>Type</th>
+                            <th>Join Date</th>
+                            <th>Status</th>
+                            <th>Total Paid</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for member in members %}
+                        <tr>
+                            <td>{{ member.membership_number }}</td>
+                            <td>{{ member.name }}</td>
+                            <td>{{ member.phone_number }}</td>
+                            <td>{{ member.email }}</td>
+                            <td>
+                                <span class="badge bg-{% if member.membership_type == 'LIFETIME' %}success{% else %}info{% endif %}">
+                                    {{ member.get_membership_type_display }}
+                                </span>
+                            </td>
+                            <td>{{ member.join_date|date:"M d, Y" }}</td>
+                            <td>
+                                {% if member.is_active %}
+                                <span class="badge bg-success">Active</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-success fw-bold">NPR {{ member.get_total_paid|floatformat:2 }}</td>
+                            <td>
+                                <a href="{% url 'membership:member_detail' member.pk %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted text-center py-4">No members found.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,184 @@
+{% extends 'membership/base.html' %}
+{% block title %}{% if payment %}Edit{% else %}Add{% endif %} Payment{% endblock %}
+{% block content %}
+<div class="container">
+    <h2 class="mb-4"><i class="bi bi-cash"></i> {% if payment %}Edit{% else %}Record{% endif %} Payment</h2>
+    
+    <div class="card">
+        <div class="card-body">
+            <form method="post" id="paymentForm">
+                {% csrf_token %}
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Member <span class="text-danger">*</span></label>
+                        {{ form.member }}
+                        {% if form.member.errors %}<div class="text-danger">{{ form.member.errors }}</div>{% endif %}
+                        <small class="text-muted d-block mt-1" id="memberInfo"></small>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Fee Structure <span class="text-danger">*</span></label>
+                        {{ form.membership_fee }}
+                        {% if form.membership_fee.errors %}<div class="text-danger">{{ form.membership_fee.errors }}</div>{% endif %}
+                        <small class="text-muted d-block mt-1">Fee structure matching member's type and frequency</small>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Amount (NPR) <span class="text-danger">*</span></label>
+                        {{ form.amount }}
+                        {% if form.amount.errors %}<div class="text-danger">{{ form.amount.errors }}</div>{% endif %}
+                        <small class="text-muted d-block mt-1">Amount will auto-fill from fee structure</small>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Payment Date <span class="text-danger">*</span></label>
+                        {{ form.payment_date }}
+                        {% if form.payment_date.errors %}<div class="text-danger">{{ form.payment_date.errors }}</div>{% endif %}
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Payment Mode <span class="text-danger">*</span></label>
+                        {{ form.payment_mode }}
+                        {% if form.payment_mode.errors %}<div class="text-danger">{{ form.payment_mode.errors }}</div>{% endif %}
+                        <small class="text-muted d-block mt-1">How the payment was received</small>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Transaction Reference</label>
+                        {{ form.transaction_reference }}
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Collected By</label>
+                        {{ form.collected_by }}
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Remarks</label>
+                        {{ form.remarks }}
+                    </div>
+                </div>
+                
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+                
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="bi bi-save"></i> Save Payment
+                    </button>
+                    <a href="{% url 'membership:payment_list' %}" class="btn btn-secondary btn-lg">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Store member data for filtering
+const memberData = {
+    {% for member in form.fields.member.queryset %}
+    {{ member.pk }}: {
+        membershipType: '{{ member.membership_type }}',
+        paymentFrequency: '{{ member.payment_frequency }}',
+        membershipTypeDisplay: '{{ member.get_membership_type_display }}',
+        paymentFrequencyDisplay: '{{ member.get_payment_frequency_display }}'
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+};
+
+// Store fee data for filtering and amount
+const feeData = {
+    {% for fee in form.fields.membership_fee.queryset %}
+    {{ fee.pk }}: {
+        membershipType: '{{ fee.membership_type }}',
+        paymentMode: '{{ fee.payment_mode }}',
+        amount: {{ fee.amount }}
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+};
+
+function updateFeeOptions() {
+    const memberSelect = document.getElementById('id_member');
+    const feeSelect = document.getElementById('id_membership_fee');
+    const memberInfo = document.getElementById('memberInfo');
+    const amountInput = document.getElementById('id_amount');
+    
+    const selectedMemberId = memberSelect.value;
+    
+    if (!selectedMemberId) {
+        memberInfo.innerHTML = '';
+        feeSelect.innerHTML = '<option value="">---------</option>';
+        amountInput.value = '';
+        return;
+    }
+    
+    const member = memberData[selectedMemberId];
+    
+    // Show member info
+    memberInfo.innerHTML = `<i class="bi bi-info-circle"></i> ${member.membershipTypeDisplay} member paying ${member.paymentFrequencyDisplay}`;
+    
+    // Filter fees
+    const currentFee = feeSelect.value;
+    feeSelect.innerHTML = '<option value="">---------</option>';
+    
+    let matchingFees = 0;
+    Object.keys(feeData).forEach(feeId => {
+        const fee = feeData[feeId];
+        if (fee.membershipType === member.membershipType && fee.paymentMode === member.paymentFrequency) {
+            const option = document.createElement('option');
+            option.value = feeId;
+            option.textContent = feeSelect.querySelector(`option[value="${feeId}"]`)?.textContent || `Fee ${feeId}`;
+            
+            // Re-select if it was previously selected
+            if (feeId == currentFee) {
+                option.selected = true;
+            }
+            
+            feeSelect.appendChild(option);
+            matchingFees++;
+        }
+    });
+    
+    // Auto-select if only one option
+    if (matchingFees === 1) {
+        feeSelect.selectedIndex = 1;
+        updateAmount();
+    }
+    
+    // Clear amount if no matching fees
+    if (matchingFees === 0) {
+        memberInfo.innerHTML += '<br><span class="text-danger"><i class="bi bi-exclamation-triangle"></i> No fee structure available for this member. Please create one first.</span>';
+        amountInput.value = '';
+    }
+}
+
+function updateAmount() {
+    const feeSelect = document.getElementById('id_membership_fee');
+    const amountInput = document.getElementById('id_amount');
+    
+    const selectedFeeId = feeSelect.value;
+    
+    if (selectedFeeId && feeData[selectedFeeId]) {
+        amountInput.value = feeData[selectedFeeId].amount;
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateFeeOptions();
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,166 @@
+{% extends 'membership/base.html' %}
+
+{% block title %}{{ action }} Member - Newa Samparka Samuha{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-person-plus"></i> {{ action }} Member</h1>
+        <a href="{% url 'membership:member_list' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to List
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <h5 class="border-bottom pb-2 mb-3"><i class="bi bi-person"></i> Primary Information</h5>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                        {{ form.name }}
+                        {% if form.name.errors %}<div class="text-danger small">{{ form.name.errors }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Phone Number <span class="text-danger">*</span></label>
+                        {{ form.phone_number }}
+                        {% if form.phone_number.errors %}<div class="text-danger small">{{ form.phone_number.errors }}</div>{% endif %}
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Email <span class="text-danger">*</span></label>
+                        {{ form.email }}
+                        {% if form.email.errors %}<div class="text-danger small">{{ form.email.errors }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Citizenship Number <span class="text-danger">*</span></label>
+                        {{ form.citizenship_number }}
+                        {% if form.citizenship_number.errors %}<div class="text-danger small">{{ form.citizenship_number.errors }}</div>{% endif %}
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Permanent Address <span class="text-danger">*</span></label>
+                        {{ form.permanent_address }}
+                        {% if form.permanent_address.errors %}<div class="text-danger small">{{ form.permanent_address.errors }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Current Address <span class="text-danger">*</span></label>
+                        {{ form.current_address }}
+                        {% if form.current_address.errors %}<div class="text-danger small">{{ form.current_address.errors }}</div>{% endif %}
+                    </div>
+                </div>
+                
+                <h5 class="border-bottom pb-2 mb-3 mt-4"><i class="bi bi-info-circle"></i> Secondary Information</h5>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Father's Name <span class="text-danger">*</span></label>
+                        {{ form.father_name }}
+                        {% if form.father_name.errors %}<div class="text-danger small">{{ form.father_name.errors }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Mother's Name <span class="text-danger">*</span></label>
+                        {{ form.mother_name }}
+                        {% if form.mother_name.errors %}<div class="text-danger small">{{ form.mother_name.errors }}</div>{% endif %}
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Spouse Name</label>
+                        {{ form.spouse_name }}
+                        {% if form.spouse_name.errors %}<div class="text-danger small">{{ form.spouse_name.errors }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Citizenship Issue Date</label>
+                        {{ form.citizenship_issue_date }}
+                        {% if form.citizenship_issue_date.errors %}<div class="text-danger small">{{ form.citizenship_issue_date.errors }}</div>{% endif %}
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Citizenship Issue District</label>
+                    {{ form.citizenship_issue_district }}
+                    {% if form.citizenship_issue_district.errors %}<div class="text-danger small">{{ form.citizenship_issue_district.errors }}</div>{% endif %}
+                </div>
+                
+                <h5 class="border-bottom pb-2 mb-3 mt-4"><i class="bi bi-people-fill"></i> Children</h5>
+                {{ formset.management_form }}
+                <div id="formset">
+                    {% for child_form in formset %}
+                        <div class="child-form border rounded p-3 mb-3">
+                            <div class="row">
+                                <div class="col-md-5 mb-2">
+                                    <label class="form-label">Child's Name</label>
+                                    {{ child_form.name }}
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    <label class="form-label">Date of Birth</label>
+                                    {{ child_form.date_of_birth }}
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    <label class="form-label">Gender</label>
+                                    {{ child_form.gender }}
+                                </div>
+                                <div class="col-md-1 mb-2 d-flex align-items-end">
+                                    {{ child_form.DELETE }}
+                                    <label class="form-label ms-2">Delete</label>
+                                </div>
+                            </div>
+                            {{ child_form.id }}
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <h5 class="border-bottom pb-2 mb-3 mt-4"><i class="bi bi-card-checklist"></i> Membership Details</h5>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Membership Type <span class="text-danger">*</span></label>
+                        {{ form.membership_type }}
+                        {% if form.membership_type.errors %}<div class="text-danger small">{{ form.membership_type.errors }}</div>{% endif %}
+                        <small class="text-muted d-block mt-1">
+                            <i class="bi bi-info-circle"></i> Lifetime: One-time payment, never expires<br>
+                            <i class="bi bi-info-circle"></i> Regular: Recurring payments required
+                        </small>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Payment Frequency <span class="text-danger">*</span></label>
+                        {{ form.payment_frequency }}
+                        {% if form.payment_frequency.errors %}<div class="text-danger small">{{ form.payment_frequency.errors }}</div>{% endif %}
+                        <small class="text-muted d-block mt-1">
+                            <i class="bi bi-info-circle"></i> Annual: Pay once per year<br>
+                            <i class="bi bi-info-circle"></i> Monthly: Pay every month
+                        </small>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Join Date <span class="text-danger">*</span></label>
+                        {{ form.join_date }}
+                        {% if form.join_date.errors %}<div class="text-danger small">{{ form.join_date.errors }}</div>{% endif %}
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="form-check">
+                        {{ form.is_active }}
+                        <label class="form-check-label">Active Status</label>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-save"></i> Save Member
+                    </button>
+                    <a href="{% url 'membership:member_list' %}" class="btn btn-secondary btn-lg">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

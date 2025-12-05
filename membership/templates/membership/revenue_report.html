@@ -1,0 +1,231 @@
+{% extends 'membership/base.html' %}
+
+{% block title %}Revenue Report - Newa Samparka Samuha{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-graph-up"></i> Revenue Report</h1>
+        <button onclick="window.print()" class="btn btn-primary no-print">
+            <i class="bi bi-printer"></i> Print Report
+        </button>
+    </div>
+
+    <!-- Date Range Filter -->
+    <div class="card mb-4 no-print">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="start_date" class="form-label">Start Date</label>
+                    <input type="date" class="form-control" id="start_date" name="start_date" 
+                           value="{{ start_date }}" required>
+                </div>
+                <div class="col-md-4">
+                    <label for="end_date" class="form-label">End Date</label>
+                    <input type="date" class="form-control" id="end_date" name="end_date" 
+                           value="{{ end_date }}" required>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-calendar-check"></i> Generate Report
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 opacity-75">Total Revenue</h6>
+                    <h2 class="card-title mb-0">NPR {{ total_revenue|floatformat:2 }}</h2>
+                    <p class="card-text mb-0">
+                        From {{ start_date|date:"M d, Y" }} to {{ end_date|date:"M d, Y" }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 opacity-75">Total Payments</h6>
+                    <h2 class="card-title mb-0">{{ payment_count }}</h2>
+                    <p class="card-text mb-0">Number of transactions</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Revenue by Payment Mode -->
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-credit-card"></i> Revenue by Payment Mode</h5>
+                </div>
+                <div class="card-body">
+                    {% if revenue_by_mode %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Payment Mode</th>
+                                    <th>Transactions</th>
+                                    <th class="text-end">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in revenue_by_mode %}
+                                <tr>
+                                    <td>
+                                        {% if item.payment_mode == 'CASH' %}Cash
+                                        {% elif item.payment_mode == 'BANK_TRANSFER' %}Bank Transfer
+                                        {% elif item.payment_mode == 'ONLINE' %}Online Payment
+                                        {% elif item.payment_mode == 'CHEQUE' %}Cheque
+                                        {% else %}{{ item.payment_mode }}
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ item.count }}</td>
+                                    <td class="text-end fw-bold text-success">NPR {{ item.total|floatformat:2 }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-active">
+                                <tr>
+                                    <th>Total:</th>
+                                    <th>{{ payment_count }}</th>
+                                    <th class="text-end text-success">NPR {{ total_revenue|floatformat:2 }}</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted mb-0">No data available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Revenue by Membership Type -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-card-checklist"></i> Revenue by Membership Type</h5>
+                </div>
+                <div class="card-body">
+                    {% if revenue_by_type %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Membership Type</th>
+                                    <th>Transactions</th>
+                                    <th class="text-end">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in revenue_by_type %}
+                                <tr>
+                                    <td>
+                                        {% if item.membership_fee__membership_type == 'REGULAR' %}Regular
+                                        {% elif item.membership_fee__membership_type == 'LIFETIME' %}Lifetime Membership
+                                        {% else %}{{ item.membership_fee__membership_type }}
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ item.count }}</td>
+                                    <td class="text-end fw-bold text-success">NPR {{ item.total|floatformat:2 }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-active">
+                                <tr>
+                                    <th>Total:</th>
+                                    <th>{{ payment_count }}</th>
+                                    <th class="text-end text-success">NPR {{ total_revenue|floatformat:2 }}</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted mb-0">No data available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily Revenue Chart -->
+    {% if daily_revenue %}
+    <div class="card mb-4">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Daily Revenue Breakdown</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th class="text-end">Amount Collected</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in daily_revenue %}
+                        <tr>
+                            <td>{{ item.day|date:"F d, Y (l)" }}</td>
+                            <td class="text-end fw-bold text-success">NPR {{ item.total|floatformat:2 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Detailed Transactions -->
+    <div class="card">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0"><i class="bi bi-list-ul"></i> Detailed Transactions</h5>
+        </div>
+        <div class="card-body">
+            {% if payments %}
+            <div class="table-responsive">
+                <table class="table table-hover table-sm">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Receipt #</th>
+                            <th>Member</th>
+                            <th>Type</th>
+                            <th>Mode</th>
+                            <th class="text-end">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payments %}
+                        <tr>
+                            <td>{{ payment.payment_date|date:"M d, Y" }}</td>
+                            <td>{{ payment.receipt_number }}</td>
+                            <td>{{ payment.member.name }}</td>
+                            <td>
+                                <span class="badge bg-{% if payment.membership_fee.membership_type == 'LIFETIME' %}success{% else %}info{% endif %} badge-sm">
+                                    {{ payment.membership_fee.get_membership_type_display }}
+                                </span>
+                            </td>
+                            <td>{{ payment.get_payment_mode_display }}</td>
+                            <td class="text-end fw-bold">NPR {{ payment.amount|floatformat:2 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted text-center py-4">No transactions found for the selected period.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
