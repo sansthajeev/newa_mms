@@ -2,7 +2,52 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
 from django.utils.safestring import mark_safe
-from .models import Member, Child, MembershipFee, Payment
+from django.utils import timezone
+from .models import Member, Child, MembershipFee, Payment, UserProfile
+
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ['user', 'user_email', 'user_name', 'is_approved', 'approved_by', 'approved_at']
+    list_filter = ['is_approved']
+    search_fields = ['user__username', 'user__email', 'user__first_name', 'user__last_name']
+    readonly_fields = ['approved_at']
+    
+    def user_email(self, obj):
+        return obj.user.email
+    user_email.short_description = 'Email'
+    
+    def user_name(self, obj):
+        return f"{obj.user.first_name} {obj.user.last_name}".strip() or "-"
+    user_name.short_description = 'Name'
+    
+    def save_model(self, request, obj, form, change):
+        # If approving a user, set approved_by and approved_at
+        if 'is_approved' in form.changed_data and obj.is_approved:
+            obj.approved_by = request.user
+            obj.approved_at = timezone.now()
+        super().save_model(request, obj, form, change)
+    
+    actions = ['approve_users', 'unapprove_users']
+    
+    def approve_users(self, request, queryset):
+        """Bulk approve users"""
+        count = 0
+        for profile in queryset:
+            if not profile.is_approved:
+                profile.is_approved = True
+                profile.approved_by = request.user
+                profile.approved_at = timezone.now()
+                profile.save()
+                count += 1
+        self.message_user(request, f'{count} user(s) approved successfully.')
+    approve_users.short_description = "Approve selected users"
+    
+    def unapprove_users(self, request, queryset):
+        """Bulk unapprove users"""
+        count = queryset.update(is_approved=False, approved_by=None, approved_at=None)
+        self.message_user(request, f'{count} user(s) unapproved.')
+    unapprove_users.short_description = "Unapprove selected users"
 
 
 class ChildInline(admin.TabularInline):
@@ -120,12 +165,12 @@ class MembershipFeeAdmin(admin.ModelAdmin):
     """Admin interface for MembershipFee model"""
     list_display = [
         'membership_type',
-        'payment_mode',
+        'payment_frequency',
         'amount_display',
         'is_active',
         'created_at'
     ]
-    list_filter = ['membership_type', 'payment_mode', 'is_active']
+    list_filter = ['membership_type', 'payment_frequency', 'is_active']
     search_fields = ['description']
     
     fieldsets = (

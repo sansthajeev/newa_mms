@@ -150,7 +150,7 @@ class MembershipFeeForm(forms.ModelForm):
     
     class Meta:
         model = MembershipFee
-        fields = ['membership_type', 'payment_mode', 'amount', 'description', 'is_active']
+        fields = ['membership_type', 'payment_frequency', 'amount', 'description', 'is_active']
         widgets = {
             'membership_type': forms.Select(attrs={'class': 'form-select'}),
             'payment_frequency': forms.Select(attrs={'class': 'form-select'}),

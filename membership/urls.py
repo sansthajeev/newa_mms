@@ -8,6 +8,13 @@ urlpatterns = [
     path('login/', views.user_login, name='login'),
     path('register/', views.user_register, name='register'),
     path('logout/', views.user_logout, name='logout'),
+    path('pending/', views.pending_approval, name='pending_approval'),
+    
+    # User Approval (Admin Only)
+    path('users/', views.user_approval_list, name='user_approval_list'),
+    path('users/<int:pk>/', views.user_detail_admin, name='user_detail'),
+    path('users/<int:pk>/approve/', views.user_approve, name='user_approve'),
+    path('users/<int:pk>/unapprove/', views.user_unapprove, name='user_unapprove'),
     
     # Dashboard
     path('', views.home, name='home'),

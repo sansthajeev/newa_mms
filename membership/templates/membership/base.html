@@ -76,6 +76,13 @@
                             <i class="bi bi-graph-up"></i> Reports
                         </a>
                     </li>
+                    {% if user.is_superuser or user.is_staff %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'membership:user_approval_list' %}">
+                            <i class="bi bi-person-check"></i> User Approval
+                        </a>
+                    </li>
+                    {% endif %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" 
                            data-bs-toggle="dropdown" aria-expanded="false">

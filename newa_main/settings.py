@@ -49,6 +49,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'membership.middleware.ApprovalRequiredMiddleware',
 ]
 
 ROOT_URLCONF = 'newa_main.urls'

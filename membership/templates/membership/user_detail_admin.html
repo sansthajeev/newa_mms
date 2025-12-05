@@ -1,0 +1,161 @@
+{% extends 'membership/base.html' %}
+{% block title %}User Details - {{ user_profile.user.username }}{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-person-badge"></i> User Details</h1>
+        <a href="{% url 'membership:user_approval_list' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to List
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- User Information -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-person"></i> User Information</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th width="40%">Username:</th>
+                            <td><strong>{{ user_profile.user.username }}</strong></td>
+                        </tr>
+                        <tr>
+                            <th>First Name:</th>
+                            <td>{{ user_profile.user.first_name|default:"Not provided" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Last Name:</th>
+                            <td>{{ user_profile.user.last_name|default:"Not provided" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Email:</th>
+                            <td>{{ user_profile.user.email }}</td>
+                        </tr>
+                        <tr>
+                            <th>Date Joined:</th>
+                            <td>{{ user_profile.user.date_joined|date:"F d, Y H:i" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Last Login:</th>
+                            <td>
+                                {% if user_profile.user.last_login %}
+                                    {{ user_profile.user.last_login|date:"F d, Y H:i" }}
+                                {% else %}
+                                    <span class="text-muted">Never logged in</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>User Type:</th>
+                            <td>
+                                {% if user_profile.user.is_superuser %}
+                                    <span class="badge bg-danger">Superuser</span>
+                                {% elif user_profile.user.is_staff %}
+                                    <span class="badge bg-info">Staff</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Regular User</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Active Status:</th>
+                            <td>
+                                {% if user_profile.user.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Inactive</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Approval Status -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header {% if user_profile.is_approved %}bg-success{% else %}bg-warning{% endif %} text-white">
+                    <h5 class="mb-0"><i class="bi bi-shield-check"></i> Approval Status</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th width="40%">Approval Status:</th>
+                            <td>
+                                {% if user_profile.is_approved %}
+                                    <span class="badge bg-success fs-6">
+                                        <i class="bi bi-check-circle"></i> Approved
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-warning fs-6">
+                                        <i class="bi bi-hourglass-split"></i> Pending
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% if user_profile.is_approved %}
+                        <tr>
+                            <th>Approved By:</th>
+                            <td>
+                                {% if user_profile.approved_by %}
+                                    <strong>{{ user_profile.approved_by.username }}</strong>
+                                {% else %}
+                                    <span class="text-muted">Auto-approved</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Approved At:</th>
+                            <td>
+                                {% if user_profile.approved_at %}
+                                    {{ user_profile.approved_at|date:"F d, Y H:i" }}
+                                {% else %}
+                                    <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </table>
+
+                    <div class="mt-4">
+                        {% if user_profile.is_approved %}
+                            <a href="{% url 'membership:user_unapprove' user_profile.id %}" 
+                               class="btn btn-warning btn-lg w-100"
+                               onclick="return confirm('Are you sure you want to unapprove this user? They will lose access to the system.')">
+                                <i class="bi bi-x-circle"></i> Unapprove User
+                            </a>
+                        {% else %}
+                            <a href="{% url 'membership:user_approve' user_profile.id %}" 
+                               class="btn btn-success btn-lg w-100"
+                               onclick="return confirm('Approve this user? They will gain full access to the system.')">
+                                <i class="bi bi-check-circle"></i> Approve User
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card mt-4">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="bi bi-lightning"></i> Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'membership:user_approval_list' %}?filter=pending" class="btn btn-outline-primary">
+                            <i class="bi bi-list"></i> View All Pending Users
+                        </a>
+                        <a href="{% url 'membership:user_approval_list' %}?filter=approved" class="btn btn-outline-success">
+                            <i class="bi bi-check-all"></i> View All Approved Users
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

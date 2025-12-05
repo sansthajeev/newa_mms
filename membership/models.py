@@ -4,6 +4,47 @@ from django.utils import timezone
 from decimal import Decimal
 from datetime import timedelta
 from dateutil.relativedelta import relativedelta
+from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+
+class UserProfile(models.Model):
+    """Extended user profile for approval system"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    is_approved = models.BooleanField(default=False, verbose_name="Approved")
+    approved_by = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='approved_users',
+        verbose_name="Approved By"
+    )
+    approved_at = models.DateTimeField(null=True, blank=True, verbose_name="Approved At")
+    
+    def __str__(self):
+        return f"{self.user.username} - {'Approved' if self.is_approved else 'Pending'}"
+    
+    class Meta:
+        verbose_name = "User Profile"
+        verbose_name_plural = "User Profiles"
+
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """Auto-create profile for new users"""
+    if created:
+        # Check if user is superuser/staff - auto-approve them
+        is_admin = instance.is_superuser or instance.is_staff
+        UserProfile.objects.create(user=instance, is_approved=is_admin)
+
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    """Save profile when user is saved"""
+    if hasattr(instance, 'profile'):
+        instance.profile.save()
 
 
 class Member(models.Model):
@@ -251,7 +292,7 @@ class MembershipFee(models.Model):
         ('ANNUAL', 'Annual'),
         ('MONTHLY', 'Monthly'),
     ]
-    payment_mode = models.CharField(
+    payment_frequency = models.CharField(
         max_length=20,
         choices=PAYMENT_FREQUENCY_CHOICES,
         verbose_name="Payment Frequency"
@@ -272,13 +313,13 @@ class MembershipFee(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        ordering = ['membership_type', 'payment_mode']
+        ordering = ['membership_type', 'payment_frequency']
         verbose_name = "Membership Fee"
         verbose_name_plural = "Membership Fees"
-        unique_together = ['membership_type', 'payment_mode']
+        unique_together = ['membership_type', 'payment_frequency']
     
     def __str__(self):
-        return f"{self.get_membership_type_display()} - {self.get_payment_mode_display()}: NPR {self.amount}"
+        return f"{self.get_membership_type_display()} - {self.get_payment_frequency_display()}: NPR {self.amount}"
 
 
 class Payment(models.Model):
