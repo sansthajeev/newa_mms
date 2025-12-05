@@ -123,3 +123,9 @@ media/
 # **/migrations/**
 # !**/migrations
 # !**/migrations/__init__.py
+
+*.log
+*.pot
+*.mo
+*.pyc
+__pycache__/
