@@ -72,13 +72,15 @@ class MemberForm(forms.ModelForm):
     class Meta:
         model = Member
         fields = [
-            'name', 'phone_number', 'email', 'permanent_address', 'current_address',
+            'photograph', 'name', 'date_of_birth', 'phone_number', 'email', 'permanent_address', 'current_address',
             'father_name', 'mother_name', 'spouse_name',
             'citizenship_number', 'citizenship_issue_date', 'citizenship_issue_district',
             'membership_type', 'payment_frequency', 'join_date', 'is_active'
         ]
         widgets = {
+            'photograph': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Full Name'}),
+            'date_of_birth': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'phone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+977XXXXXXXXXX'}),
             'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'email@example.com'}),
             'permanent_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Permanent Address'}),
@@ -193,7 +195,7 @@ class PaymentForm(forms.ModelForm):
             member = self.instance.member
             self.fields['membership_fee'].queryset = MembershipFee.objects.filter(
                 membership_type=member.membership_type,
-                payment_mode=member.payment_frequency,
+                payment_frequency=member.payment_frequency,
                 is_active=True
             )
             # Auto-fill amount from fee structure
@@ -223,9 +225,9 @@ class PaymentForm(forms.ModelForm):
                     f"but this member is {member.get_membership_type_display()}."
                 )
             
-            if membership_fee.payment_mode != member.payment_frequency:
+            if membership_fee.payment_frequency != member.payment_frequency:
                 raise forms.ValidationError(
-                    f"Selected fee is for {membership_fee.get_payment_mode_display()} payments, "
+                    f"Selected fee is for {membership_fee.get_payment_frequency_display()} payments, "
                     f"but this member pays {member.get_payment_frequency_display()}."
                 )
         

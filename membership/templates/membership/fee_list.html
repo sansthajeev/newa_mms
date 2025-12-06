@@ -15,7 +15,7 @@
                     <thead>
                         <tr>
                             <th>Type</th>
-                            <th>Payment Mode</th>
+                            <th>Frequency</th>
                             <th>Amount</th>
                             <th>Description</th>
                             <th>Status</th>
@@ -26,7 +26,7 @@
                         {% for fee in fees %}
                         <tr>
                             <td>{{ fee.get_membership_type_display }}</td>
-                            <td>{{ fee.get_payment_mode_display }}</td>
+                            <td><span class="badge bg-info">{{ fee.get_payment_frequency_display }}</span></td>
                             <td class="fw-bold text-success">NPR {{ fee.amount }}</td>
                             <td>{{ fee.description|default:"—"|truncatewords:10 }}</td>
                             <td>

@@ -1,4 +1,5 @@
 {% extends 'membership/base.html' %}
+{% load nepali_filters %}
 
 {% block title %}{{ member.name }} - Member Details{% endblock %}
 
@@ -20,8 +21,25 @@
     </div>
 
     <div class="row">
+        <!-- Member Photograph -->
+        {% if member.photograph %}
+        <div class="col-lg-3 mb-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="bi bi-camera"></i> Photograph</h6>
+                </div>
+                <div class="card-body text-center">
+                    <img src="{{ member.photograph.url }}" alt="{{ member.name }}" class="img-fluid rounded" style="max-height: 300px;">
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-9">
+        {% else %}
+        <div class="col-lg-12">
+        {% endif %}
+        
         <!-- Primary Information -->
-        <div class="col-lg-6 mb-4">
+        <div class="col-12 mb-4">
             <div class="card">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0"><i class="bi bi-person"></i> Primary Information</h5>
@@ -36,6 +54,15 @@
                             <th>Full Name:</th>
                             <td>{{ member.name }}</td>
                         </tr>
+                        {% if member.date_of_birth %}
+                        <tr>
+                            <th>Date of Birth:</th>
+                            <td>
+                                {{ member.date_of_birth|date:"F d, Y" }}
+                                <br><small class="text-muted">{{ member.date_of_birth|nepali:"medium" }} BS</small>
+                            </td>
+                        </tr>
+                        {% endif %}
                         <tr>
                             <th>Phone Number:</th>
                             <td>{{ member.phone_number }}</td>
@@ -56,6 +83,7 @@
                 </div>
             </div>
         </div>
+        </div> <!-- Close col-lg-9 or col-lg-12 -->
 
         <!-- Secondary Information -->
         <div class="col-lg-6 mb-4">
@@ -83,7 +111,12 @@
                         </tr>
                         <tr>
                             <th>Issue Date:</th>
-                            <td>{{ member.citizenship_issue_date|date:"M d, Y"|default:"N/A" }}</td>
+                            <td>
+                                {{ member.citizenship_issue_date|date:"M d, Y"|default:"N/A" }}
+                                {% if member.citizenship_issue_date %}
+                                    <br><small class="text-muted">{{ member.citizenship_issue_date|nepali:"medium" }} BS</small>
+                                {% endif %}
+                            </td>
                         </tr>
                         <tr>
                             <th>Issue District:</th>
@@ -119,7 +152,10 @@
                         </tr>
                         <tr>
                             <th>Join Date:</th>
-                            <td>{{ member.join_date|date:"F d, Y" }}</td>
+                            <td>
+                                {{ member.join_date|date:"F d, Y" }}
+                                <br><small class="text-muted">{{ member.join_date|nepali:"medium" }} BS</small>
+                            </td>
                         </tr>
                         <tr>
                             <th>Membership Status:</th>
@@ -149,7 +185,7 @@
                                         {% if status.days_remaining > 0 %}
                                             ({{ status.days_remaining }} days remaining)
                                         {% else %}
-                                            (Expired {{ status.days_remaining|cut:"-" }} days ago)
+                                            (Expired {{ status.days_remaining|abs }} days ago)
                                         {% endif %}
                                     </small>
                                 {% endif %}
@@ -197,7 +233,12 @@
                             {% for child in children %}
                             <tr>
                                 <td>{{ child.name }}</td>
-                                <td>{{ child.date_of_birth|date:"M d, Y"|default:"N/A" }}</td>
+                                <td>
+                                    {{ child.date_of_birth|date:"M d, Y"|default:"N/A" }}
+                                    {% if child.date_of_birth %}
+                                        <br><small class="text-muted">{{ child.date_of_birth|nepali:"medium" }} BS</small>
+                                    {% endif %}
+                                </td>
                                 <td>{{ child.get_gender_display|default:"N/A" }}</td>
                             </tr>
                             {% endfor %}

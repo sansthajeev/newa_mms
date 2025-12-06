@@ -63,6 +63,18 @@ class Member(models.Model):
     email = models.EmailField(verbose_name="Email Address")
     permanent_address = models.TextField(verbose_name="Permanent Address")
     current_address = models.TextField(verbose_name="Current Address")
+    date_of_birth = models.DateField(
+        verbose_name="Date of Birth",
+        blank=True,
+        null=True
+    )
+    photograph = models.ImageField(
+        upload_to='member_photos/',
+        verbose_name="Photograph",
+        blank=True,
+        null=True,
+        help_text="Upload member's photograph (JPG, PNG)"
+    )
     
     # Secondary Information
     father_name = models.CharField(max_length=200, verbose_name="Father's Name")
@@ -234,7 +246,7 @@ class Member(models.Model):
         try:
             fee = MembershipFee.objects.get(
                 membership_type=self.membership_type,
-                payment_mode=self.payment_frequency,
+                payment_frequency=self.payment_frequency,
                 is_active=True
             )
             return fee.amount
@@ -425,7 +437,7 @@ class Payment(models.Model):
             member.membership_valid_until = None
         else:
             # Regular members - calculate expiry based on payment frequency
-            frequency = self.membership_fee.payment_mode  # ANNUAL or MONTHLY
+            frequency = self.membership_fee.payment_frequency  # ANNUAL or MONTHLY
             
             if frequency == 'MONTHLY':
                 # Add 1 month

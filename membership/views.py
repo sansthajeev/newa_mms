@@ -144,7 +144,7 @@ def member_detail(request, pk):
 def member_add(request):
     """Add new member"""
     if request.method == 'POST':
-        form = MemberForm(request.POST)
+        form = MemberForm(request.POST, request.FILES)
         formset = ChildFormSet(request.POST)
         
         if form.is_valid() and formset.is_valid():
@@ -172,7 +172,7 @@ def member_edit(request, pk):
     member = get_object_or_404(Member, pk=pk)
     
     if request.method == 'POST':
-        form = MemberForm(request.POST, instance=member)
+        form = MemberForm(request.POST, request.FILES, instance=member)
         formset = ChildFormSet(request.POST, instance=member)
         
         if form.is_valid() and formset.is_valid():
@@ -418,114 +418,6 @@ def revenue_report(request):
         'payments': payments.order_by('-payment_date'),
     }
     return render(request, 'membership/revenue_report.html', context)
-
-
-# User Approval Views (Admin Only)
-@login_required
-@user_passes_test(is_admin)
-def user_approval_list(request):
-    """List all users for approval management (admin only)"""
-    filter_type = request.GET.get('filter', 'pending')
-    
-    # Get all user profiles
-    if filter_type == 'pending':
-        users = UserProfile.objects.filter(is_approved=False).select_related('user', 'approved_by')
-    elif filter_type == 'approved':
-        users = UserProfile.objects.filter(is_approved=True).select_related('user', 'approved_by')
-    else:  # all
-        users = UserProfile.objects.all().select_related('user', 'approved_by')
-    
-    # Order by date joined (newest first)
-    users = users.order_by('-user__date_joined')
-    
-    # Handle bulk actions
-    if request.method == 'POST':
-        action = request.POST.get('action')
-        user_ids = request.POST.getlist('user_ids')
-        
-        if user_ids:
-            profiles = UserProfile.objects.filter(id__in=user_ids)
-            
-            if action == 'bulk_approve':
-                count = 0
-                for profile in profiles:
-                    if not profile.is_approved:
-                        profile.is_approved = True
-                        profile.approved_by = request.user
-                        profile.approved_at = timezone.now()
-                        profile.save()
-                        count += 1
-                messages.success(request, f'{count} user(s) approved successfully.')
-            
-            elif action == 'bulk_unapprove':
-                count = profiles.update(is_approved=False, approved_by=None, approved_at=None)
-                messages.warning(request, f'{count} user(s) unapproved.')
-        
-        return redirect('membership:user_approval_list')
-    
-    # Get counts
-    pending_count = UserProfile.objects.filter(is_approved=False).count()
-    approved_count = UserProfile.objects.filter(is_approved=True).count()
-    all_count = UserProfile.objects.count()
-    
-    context = {
-        'users': users,
-        'filter': filter_type,
-        'pending_count': pending_count,
-        'approved_count': approved_count,
-        'all_count': all_count,
-    }
-    
-    return render(request, 'membership/user_approval_list.html', context)
-
-
-@login_required
-@user_passes_test(is_admin)
-def user_detail_admin(request, pk):
-    """View user details for admin"""
-    user_profile = get_object_or_404(UserProfile, pk=pk)
-    
-    context = {
-        'user_profile': user_profile,
-    }
-    
-    return render(request, 'membership/user_detail_admin.html', context)
-
-
-@login_required
-@user_passes_test(is_admin)
-def user_approve(request, pk):
-    """Approve a user"""
-    user_profile = get_object_or_404(UserProfile, pk=pk)
-    
-    if not user_profile.is_approved:
-        user_profile.is_approved = True
-        user_profile.approved_by = request.user
-        user_profile.approved_at = timezone.now()
-        user_profile.save()
-        messages.success(request, f'User {user_profile.user.username} has been approved.')
-    else:
-        messages.info(request, f'User {user_profile.user.username} is already approved.')
-    
-    return redirect('membership:user_approval_list')
-
-
-@login_required
-@user_passes_test(is_admin)
-def user_unapprove(request, pk):
-    """Unapprove a user"""
-    user_profile = get_object_or_404(UserProfile, pk=pk)
-    
-    if user_profile.is_approved:
-        user_profile.is_approved = False
-        user_profile.approved_by = None
-        user_profile.approved_at = None
-        user_profile.save()
-        messages.warning(request, f'User {user_profile.user.username} has been unapproved.')
-    else:
-        messages.info(request, f'User {user_profile.user.username} is already unapproved.')
-    
-    return redirect('membership:user_approval_list')
 
 
 # User Approval Views (Admin Only)

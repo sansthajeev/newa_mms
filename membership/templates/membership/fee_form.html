@@ -1,5 +1,7 @@
 {% extends 'membership/base.html' %}
-{% block title %}{% if fee %}Edit{% else %}Add{% endif %} Fee Structure{% endblock %}
+
+{% block title %}{% if fee %}Edit{% else %}Add{% endif %} Fee Structure - Newa Samparka Samuha{% endblock %}
+
 {% block content %}
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -9,7 +11,7 @@
         </a>
     </div>
     
-    <div class="card">
+    <div class="card shadow-sm">
         <div class="card-body">
             <form method="post">
                 {% csrf_token %}
@@ -21,14 +23,20 @@
                         {% if form.membership_type.errors %}
                             <div class="text-danger small">{{ form.membership_type.errors }}</div>
                         {% endif %}
+                        <small class="text-muted d-block mt-1">
+                            <i class="bi bi-info-circle"></i> Regular or Lifetime membership
+                        </small>
                     </div>
                     
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Payment Mode <span class="text-danger">*</span></label>
-                        {{ form.payment_mode }}
-                        {% if form.payment_mode.errors %}
-                            <div class="text-danger small">{{ form.payment_mode.errors }}</div>
+                        <label class="form-label">Payment Frequency <span class="text-danger">*</span></label>
+                        {{ form.payment_frequency }}
+                        {% if form.payment_frequency.errors %}
+                            <div class="text-danger small">{{ form.payment_frequency.errors }}</div>
                         {% endif %}
+                        <small class="text-muted d-block mt-1">
+                            <i class="bi bi-info-circle"></i> How often members pay (Annual or Monthly)
+                        </small>
                     </div>
                 </div>
                 
@@ -38,7 +46,9 @@
                     {% if form.amount.errors %}
                         <div class="text-danger small">{{ form.amount.errors }}</div>
                     {% endif %}
-                    <small class="text-muted d-block mt-1">Enter amount in Nepali Rupees</small>
+                    <small class="text-muted d-block mt-1">
+                        <i class="bi bi-cash-stack"></i> Enter amount in Nepali Rupees
+                    </small>
                 </div>
                 
                 <div class="mb-3">
@@ -47,7 +57,9 @@
                     {% if form.description.errors %}
                         <div class="text-danger small">{{ form.description.errors }}</div>
                     {% endif %}
-                    <small class="text-muted d-block mt-1">Optional description about this fee structure</small>
+                    <small class="text-muted d-block mt-1">
+                        <i class="bi bi-file-text"></i> Optional description about this fee structure
+                    </small>
                 </div>
                 
                 <div class="mb-4">
@@ -55,7 +67,9 @@
                         {{ form.is_active }}
                         <label class="form-check-label">Active</label>
                     </div>
-                    <small class="text-muted d-block mt-1">Only active fee structures will be available for payments</small>
+                    <small class="text-muted d-block mt-1">
+                        <i class="bi bi-check-circle"></i> Only active fee structures will be available for payments
+                    </small>
                 </div>
                 
                 <div class="d-flex gap-2">
@@ -69,5 +83,25 @@
             </form>
         </div>
     </div>
+    
+    {% if fee %}
+    <div class="card mt-3 border-info">
+        <div class="card-body">
+            <h6 class="text-info"><i class="bi bi-info-circle"></i> Current Fee Structure</h6>
+            <ul class="mb-0">
+                <li><strong>Type:</strong> {{ fee.get_membership_type_display }}</li>
+                <li><strong>Frequency:</strong> {{ fee.get_payment_frequency_display }}</li>
+                <li><strong>Amount:</strong> NPR {{ fee.amount }}</li>
+                <li><strong>Status:</strong> 
+                    {% if fee.is_active %}
+                        <span class="badge bg-success">Active</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Inactive</span>
+                    {% endif %}
+                </li>
+            </ul>
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

@@ -103,7 +103,7 @@ const feeData = {
     {% for fee in form.fields.membership_fee.queryset %}
     {{ fee.pk }}: {
         membershipType: '{{ fee.membership_type }}',
-        paymentMode: '{{ fee.payment_mode }}',
+        paymentFrequency: '{{ fee.payment_frequency }}',
         amount: {{ fee.amount }}
     }{% if not forloop.last %},{% endif %}
     {% endfor %}
@@ -136,7 +136,7 @@ function updateFeeOptions() {
     let matchingFees = 0;
     Object.keys(feeData).forEach(feeId => {
         const fee = feeData[feeId];
-        if (fee.membershipType === member.membershipType && fee.paymentMode === member.paymentFrequency) {
+        if (fee.membershipType === member.membershipType && fee.paymentFrequency === member.paymentFrequency) {
             const option = document.createElement('option');
             option.value = feeId;
             option.textContent = feeSelect.querySelector(`option[value="${feeId}"]`)?.textContent || `Fee ${feeId}`;

@@ -1,6 +1,42 @@
 {% extends 'membership/base.html' %}
+{% load static %}
+{% load nepali_filters %}
 
 {% block title %}{{ action }} Member - Newa Samparka Samuha{% endblock %}
+
+{% block extra_css %}
+<style>
+.nepali-date-input {
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 5px;
+    border-left: 3px solid #0d6efd;
+}
+.date-input-group {
+    position: relative;
+}
+.children-questionnaire {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 4px solid #0d6efd;
+    margin-bottom: 20px;
+}
+.children-count-input {
+    max-width: 150px;
+}
+.child-form {
+    animation: fadeIn 0.3s ease-in;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.hidden {
+    display: none;
+}
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -13,103 +49,167 @@
 
     <div class="card">
         <div class="card-body">
-            <form method="post">
+            <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 
                 <h5 class="border-bottom pb-2 mb-3"><i class="bi bi-person"></i> Primary Information</h5>
+                
+                <!-- Photograph Upload -->
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label">Photograph</label>
+                        {{ form.photograph }}
+                        {% if form.photograph.errors %}<div class="text-danger small">{{ form.photograph.errors }}</div>{% endif %}
+                        <small class="text-muted d-block mt-1">
+                            <i class="bi bi-image"></i> Upload member's photograph (JPG, PNG - Max 5MB)
+                        </small>
+                        {% if form.instance.photograph %}
+                        <div class="mt-2">
+                            <img src="{{ form.instance.photograph.url }}" alt="Current photo" class="img-thumbnail" style="max-width: 150px;">
+                            <small class="d-block text-muted">Current photograph</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                        <label class="form-label">Name <span class="text-danger">*</span></label>
                         {{ form.name }}
                         {% if form.name.errors %}<div class="text-danger small">{{ form.name.errors }}</div>{% endif %}
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Phone Number <span class="text-danger">*</span></label>
-                        {{ form.phone_number }}
-                        {% if form.phone_number.errors %}<div class="text-danger small">{{ form.phone_number.errors }}</div>{% endif %}
-                    </div>
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Email <span class="text-danger">*</span></label>
-                        {{ form.email }}
-                        {% if form.email.errors %}<div class="text-danger small">{{ form.email.errors }}</div>{% endif %}
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Citizenship Number <span class="text-danger">*</span></label>
-                        {{ form.citizenship_number }}
-                        {% if form.citizenship_number.errors %}<div class="text-danger small">{{ form.citizenship_number.errors }}</div>{% endif %}
-                    </div>
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Permanent Address <span class="text-danger">*</span></label>
-                        {{ form.permanent_address }}
-                        {% if form.permanent_address.errors %}<div class="text-danger small">{{ form.permanent_address.errors }}</div>{% endif %}
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Current Address <span class="text-danger">*</span></label>
-                        {{ form.current_address }}
-                        {% if form.current_address.errors %}<div class="text-danger small">{{ form.current_address.errors }}</div>{% endif %}
-                    </div>
-                </div>
-                
-                <h5 class="border-bottom pb-2 mb-3 mt-4"><i class="bi bi-info-circle"></i> Secondary Information</h5>
-                <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Father's Name <span class="text-danger">*</span></label>
                         {{ form.father_name }}
                         {% if form.father_name.errors %}<div class="text-danger small">{{ form.father_name.errors }}</div>{% endif %}
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Mother's Name <span class="text-danger">*</span></label>
-                        {{ form.mother_name }}
-                        {% if form.mother_name.errors %}<div class="text-danger small">{{ form.mother_name.errors }}</div>{% endif %}
-                    </div>
                 </div>
                 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Spouse Name</label>
+                        <label class="form-label">Grandfather's Name</label>
+                        {{ form.grandfather_name }}
+                        {% if form.grandfather_name.errors %}<div class="text-danger small">{{ form.grandfather_name.errors }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Spouse's Name</label>
                         {{ form.spouse_name }}
                         {% if form.spouse_name.errors %}<div class="text-danger small">{{ form.spouse_name.errors }}</div>{% endif %}
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Citizenship Issue Date</label>
-                        {{ form.citizenship_issue_date }}
-                        {% if form.citizenship_issue_date.errors %}<div class="text-danger small">{{ form.citizenship_issue_date.errors }}</div>{% endif %}
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Date of Birth</label>
+                        <div class="date-input-group">
+                            <label class="form-label small text-muted">English (AD)</label>
+                            {{ form.date_of_birth }}
+                            {% if form.date_of_birth.errors %}<div class="text-danger small">{{ form.date_of_birth.errors }}</div>{% endif %}
+                        </div>
+                        <div class="nepali-date-input mt-2">
+                            <label class="form-label small text-muted mb-1">Nepali (BS)</label>
+                            <input type="text" id="dob_nepali" class="form-control" placeholder="YYYY-MM-DD (BS)" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Gender <span class="text-danger">*</span></label>
+                        {{ form.gender }}
+                        {% if form.gender.errors %}<div class="text-danger small">{{ form.gender.errors }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Phone <span class="text-danger">*</span></label>
+                        {{ form.phone }}
+                        {% if form.phone.errors %}<div class="text-danger small">{{ form.phone.errors }}</div>{% endif %}
                     </div>
                 </div>
                 
-                <div class="mb-3">
-                    <label class="form-label">Citizenship Issue District</label>
-                    {{ form.citizenship_issue_district }}
-                    {% if form.citizenship_issue_district.errors %}<div class="text-danger small">{{ form.citizenship_issue_district.errors }}</div>{% endif %}
+                <h5 class="border-bottom pb-2 mb-3 mt-4"><i class="bi bi-geo-alt-fill"></i> Address</h5>
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label">Address <span class="text-danger">*</span></label>
+                        {{ form.address }}
+                        {% if form.address.errors %}<div class="text-danger small">{{ form.address.errors }}</div>{% endif %}
+                    </div>
                 </div>
                 
-                <h5 class="border-bottom pb-2 mb-3 mt-4"><i class="bi bi-people-fill"></i> Children</h5>
+                <h5 class="border-bottom pb-2 mb-3 mt-4"><i class="bi bi-card-text"></i> Citizenship Details</h5>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Citizenship Number <span class="text-danger">*</span></label>
+                        {{ form.citizenship_number }}
+                        {% if form.citizenship_number.errors %}<div class="text-danger small">{{ form.citizenship_number.errors }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Issue Date</label>
+                        <div class="date-input-group">
+                            <label class="form-label small text-muted">English (AD)</label>
+                            {{ form.citizenship_issue_date }}
+                            {% if form.citizenship_issue_date.errors %}<div class="text-danger small">{{ form.citizenship_issue_date.errors }}</div>{% endif %}
+                        </div>
+                        <div class="nepali-date-input mt-2">
+                            <label class="form-label small text-muted mb-1">Nepali (BS)</label>
+                            <input type="text" id="citizenship_issue_date_nepali" class="form-control" placeholder="YYYY-MM-DD (BS)" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Issue District</label>
+                        {{ form.citizenship_issue_district }}
+                        {% if form.citizenship_issue_district.errors %}<div class="text-danger small">{{ form.citizenship_issue_district.errors }}</div>{% endif %}
+                    </div>
+                </div>
+                
+                <!-- Children Questionnaire -->
+                <h5 class="border-bottom pb-2 mb-3 mt-4"><i class="bi bi-people-fill"></i> Children Information</h5>
+                
+                <div class="children-questionnaire">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Do you have children?</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="has_children" id="has_children_yes" value="yes">
+                            <label class="form-check-label" for="has_children_yes">
+                                Yes
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="has_children" id="has_children_no" value="no" checked>
+                            <label class="form-check-label" for="has_children_no">
+                                No
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div id="children_count_section" class="hidden">
+                        <label class="form-label fw-bold">How many children do you have?</label>
+                        <input type="number" id="children_count" class="form-control children-count-input" min="0" max="20" value="0" placeholder="Enter number">
+                        <small class="text-muted">Maximum 20 children</small>
+                    </div>
+                </div>
+                
                 {{ formset.management_form }}
                 <div id="formset">
                     {% for child_form in formset %}
-                        <div class="child-form border rounded p-3 mb-3">
+                        <div class="child-form border rounded p-3 mb-3" data-form-index="{{ forloop.counter0 }}">
+                            <h6 class="text-primary mb-3">
+                                <i class="bi bi-person-badge"></i> Child #<span class="child-number">{{ forloop.counter }}</span>
+                            </h6>
                             <div class="row">
                                 <div class="col-md-5 mb-2">
-                                    <label class="form-label">Child's Name</label>
+                                    <label class="form-label">Child's Name <span class="text-danger">*</span></label>
                                     {{ child_form.name }}
                                 </div>
                                 <div class="col-md-3 mb-2">
                                     <label class="form-label">Date of Birth</label>
-                                    {{ child_form.date_of_birth }}
+                                    <div class="date-input-group child-date-group">
+                                        {{ child_form.date_of_birth }}
+                                    </div>
                                 </div>
                                 <div class="col-md-3 mb-2">
-                                    <label class="form-label">Gender</label>
+                                    <label class="form-label">Gender <span class="text-danger">*</span></label>
                                     {{ child_form.gender }}
                                 </div>
                                 <div class="col-md-1 mb-2 d-flex align-items-end">
                                     {{ child_form.DELETE }}
-                                    <label class="form-label ms-2">Delete</label>
+                                    <label class="form-label ms-2 small">Delete</label>
                                 </div>
                             </div>
                             {{ child_form.id }}
@@ -124,8 +224,7 @@
                         {{ form.membership_type }}
                         {% if form.membership_type.errors %}<div class="text-danger small">{{ form.membership_type.errors }}</div>{% endif %}
                         <small class="text-muted d-block mt-1">
-                            <i class="bi bi-info-circle"></i> Lifetime: One-time payment, never expires<br>
-                            <i class="bi bi-info-circle"></i> Regular: Recurring payments required
+                            <i class="bi bi-info-circle"></i> Regular or Lifetime Membership
                         </small>
                     </div>
                     <div class="col-md-4 mb-3">
@@ -133,25 +232,31 @@
                         {{ form.payment_frequency }}
                         {% if form.payment_frequency.errors %}<div class="text-danger small">{{ form.payment_frequency.errors }}</div>{% endif %}
                         <small class="text-muted d-block mt-1">
-                            <i class="bi bi-info-circle"></i> Annual: Pay once per year<br>
-                            <i class="bi bi-info-circle"></i> Monthly: Pay every month
+                            <i class="bi bi-info-circle"></i> How often to pay membership fees
                         </small>
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label class="form-label">Join Date <span class="text-danger">*</span></label>
-                        {{ form.join_date }}
-                        {% if form.join_date.errors %}<div class="text-danger small">{{ form.join_date.errors }}</div>{% endif %}
+                        <label class="form-label">Join Date</label>
+                        <div class="date-input-group">
+                            <label class="form-label small text-muted">English (AD)</label>
+                            {{ form.join_date }}
+                            {% if form.join_date.errors %}<div class="text-danger small">{{ form.join_date.errors }}</div>{% endif %}
+                        </div>
+                        <div class="nepali-date-input mt-2">
+                            <label class="form-label small text-muted mb-1">Nepali (BS)</label>
+                            <input type="text" id="join_date_nepali" class="form-control" placeholder="YYYY-MM-DD (BS)" readonly>
+                        </div>
                     </div>
                 </div>
                 
                 <div class="mb-3">
                     <div class="form-check">
                         {{ form.is_active }}
-                        <label class="form-check-label">Active Status</label>
+                        <label class="form-check-label">Active Member</label>
                     </div>
                 </div>
                 
-                <div class="mt-4">
+                <div class="d-flex gap-2 mt-4">
                     <button type="submit" class="btn btn-primary btn-lg">
                         <i class="bi bi-save"></i> Save Member
                     </button>
@@ -163,4 +268,164 @@
         </div>
     </div>
 </div>
+
+<script src="{% static 'js/nepali-date-picker.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Nepali Date Pickers for main form
+    const dobPicker = new NepaliDatePicker('id_date_of_birth', 'dob_nepali');
+    const citizenshipIssueDatePicker = new NepaliDatePicker('id_citizenship_issue_date', 'citizenship_issue_date_nepali');
+    const joinDatePicker = new NepaliDatePicker('id_join_date', 'join_date_nepali');
+    
+    // Children Questionnaire Logic
+    const hasChildrenYes = document.getElementById('has_children_yes');
+    const hasChildrenNo = document.getElementById('has_children_no');
+    const childrenCountSection = document.getElementById('children_count_section');
+    const childrenCountInput = document.getElementById('children_count');
+    const formsetContainer = document.getElementById('formset');
+    const totalFormsInput = document.querySelector('input[name="children-TOTAL_FORMS"]');
+    
+    // Get initial count of existing children
+    const initialChildCount = parseInt(totalFormsInput.value) || 0;
+    
+    // Set initial state based on existing children
+    if (initialChildCount > 0) {
+        hasChildrenYes.checked = true;
+        childrenCountSection.classList.remove('hidden');
+        childrenCountInput.value = initialChildCount;
+        // Show existing forms
+        updateChildrenDisplay(initialChildCount);
+    }
+    
+    // Handle "Do you have children?" radio buttons
+    hasChildrenYes.addEventListener('change', function() {
+        if (this.checked) {
+            childrenCountSection.classList.remove('hidden');
+            childrenCountInput.value = 1;
+            childrenCountInput.focus();
+            updateChildrenForms(1);
+        }
+    });
+    
+    hasChildrenNo.addEventListener('change', function() {
+        if (this.checked) {
+            childrenCountSection.classList.add('hidden');
+            childrenCountInput.value = 0;
+            updateChildrenForms(0);
+        }
+    });
+    
+    // Handle children count input
+    childrenCountInput.addEventListener('change', function() {
+        let count = parseInt(this.value) || 0;
+        if (count < 0) count = 0;
+        if (count > 20) count = 20;
+        this.value = count;
+        updateChildrenForms(count);
+    });
+    
+    function updateChildrenForms(count) {
+        const currentForms = formsetContainer.querySelectorAll('.child-form');
+        const currentCount = currentForms.length;
+        
+        if (count > currentCount) {
+            // Add new forms
+            for (let i = currentCount; i < count; i++) {
+                addChildForm(i);
+            }
+        } else if (count < currentCount) {
+            // Remove excess forms
+            for (let i = currentCount - 1; i >= count; i--) {
+                const form = currentForms[i];
+                // Mark for deletion if it has an ID (existing record)
+                const deleteCheckbox = form.querySelector('input[type="checkbox"][name$="-DELETE"]');
+                if (deleteCheckbox) {
+                    const idInput = form.querySelector('input[name$="-id"]');
+                    if (idInput && idInput.value) {
+                        // Existing child - mark for deletion
+                        deleteCheckbox.checked = true;
+                        form.style.display = 'none';
+                    } else {
+                        // New unsaved child - remove completely
+                        form.remove();
+                    }
+                } else {
+                    form.remove();
+                }
+            }
+        }
+        
+        // Update total forms count
+        totalFormsInput.value = count;
+        
+        // Update visible forms display
+        updateChildrenDisplay(count);
+        
+        // Renumber children
+        renumberChildren();
+    }
+    
+    function updateChildrenDisplay(count) {
+        const allForms = formsetContainer.querySelectorAll('.child-form');
+        allForms.forEach((form, index) => {
+            if (index < count) {
+                form.style.display = 'block';
+            } else {
+                const deleteCheckbox = form.querySelector('input[type="checkbox"][name$="-DELETE"]');
+                if (deleteCheckbox && !deleteCheckbox.checked) {
+                    form.style.display = 'none';
+                }
+            }
+        });
+    }
+    
+    function addChildForm(index) {
+        const newForm = document.createElement('div');
+        newForm.className = 'child-form border rounded p-3 mb-3';
+        newForm.dataset.formIndex = index;
+        newForm.innerHTML = `
+            <h6 class="text-primary mb-3">
+                <i class="bi bi-person-badge"></i> Child #<span class="child-number">${index + 1}</span>
+            </h6>
+            <div class="row">
+                <div class="col-md-5 mb-2">
+                    <label class="form-label">Child's Name <span class="text-danger">*</span></label>
+                    <input type="text" name="children-${index}-name" class="form-control" id="id_children-${index}-name">
+                </div>
+                <div class="col-md-3 mb-2">
+                    <label class="form-label">Date of Birth</label>
+                    <div class="date-input-group child-date-group">
+                        <input type="date" name="children-${index}-date_of_birth" class="form-control" id="id_children-${index}-date_of_birth">
+                    </div>
+                </div>
+                <div class="col-md-3 mb-2">
+                    <label class="form-label">Gender <span class="text-danger">*</span></label>
+                    <select name="children-${index}-gender" class="form-select" id="id_children-${index}-gender">
+                        <option value="">---------</option>
+                        <option value="M">Male</option>
+                        <option value="F">Female</option>
+                        <option value="O">Other</option>
+                    </select>
+                </div>
+                <div class="col-md-1 mb-2 d-flex align-items-end">
+                    <input type="checkbox" name="children-${index}-DELETE" class="form-check-input" id="id_children-${index}-DELETE">
+                    <label class="form-label ms-2 small">Delete</label>
+                </div>
+            </div>
+            <input type="hidden" name="children-${index}-id" id="id_children-${index}-id">
+        `;
+        formsetContainer.appendChild(newForm);
+    }
+    
+    function renumberChildren() {
+        const visibleForms = formsetContainer.querySelectorAll('.child-form:not([style*="display: none"])');
+        visibleForms.forEach((form, index) => {
+            const numberSpan = form.querySelector('.child-number');
+            if (numberSpan) {
+                numberSpan.textContent = index + 1;
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

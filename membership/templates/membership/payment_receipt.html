@@ -79,7 +79,7 @@
                     <br><small class="text-muted">{{ payment.remarks }}</small>
                     {% endif %}
                 </td>
-                <td>{{ payment.membership_fee.get_payment_mode_display }}</td>
+                <td>{{ payment.membership_fee.get_payment_frequency_display }}</td>
                 <td class="text-end fw-bold">NPR {{ payment.amount|floatformat:2 }}</td>
             </tr>
         </tbody>

@@ -3,3 +3,4 @@ Pillow
 asgiref
 sqlparse
 python-dateutil
+pillow
