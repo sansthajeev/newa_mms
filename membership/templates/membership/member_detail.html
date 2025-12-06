@@ -13,6 +13,9 @@
         margin: -1.5rem -1.5rem 2rem -1.5rem;
         box-shadow: var(--shadow-md);
     }
+
+
+
     
     .profile-photo {
         width: 150px;
@@ -160,6 +163,8 @@
         color: var(--primary-blue);
     }
     
+
+
     .stat-box-label {
         font-size: 0.875rem;
         color: var(--text-muted);
@@ -171,6 +176,22 @@
         .no-print { display: none !important; }
         .profile-header { background: white; color: black; }
         .card { box-shadow: none; border: 1px solid #ddd; }
+    }
+
+
+    /* Membership Status Styling */
+    .badge {
+        border-radius: 25px;
+    }
+
+    .progress {
+        border-radius: 15px;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        font-weight: 700;
+        transition: width 0.6s ease;
     }
 </style>
 {% endblock %}
@@ -561,6 +582,100 @@
                     {% endif %}
                 </div>
             </div>
+            <!-- Membership Expiry Status Card -->
+<div class="detail-card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="bi bi-shield-check"></i> Membership Status
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="text-center py-4">
+            <!-- Status Badge -->
+            <div class="mb-4">
+                <span class="badge {{ expiry_status.status_class }}" style="font-size: 1.5rem; padding: 1rem 2rem;">
+                    <i class="{{ expiry_status.status_icon }}"></i>
+                    {{ expiry_status.status_text }}
+                </span>
+            </div>
+            
+            <!-- Additional Details -->
+            {% if not expiry_status.has_paid %}
+                <div class="alert alert-secondary">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>No Payment Record:</strong> This member hasn't made any payments yet.
+                    <br>
+                    <a href="{% url 'membership:payment_add' %}" class="btn btn-primary btn-sm mt-2">
+                        <i class="bi bi-plus-circle"></i> Add Payment
+                    </a>
+                </div>
+            {% elif expiry_status.is_lifetime %}
+                <div class="alert alert-success">
+                    <i class="bi bi-star-fill"></i>
+                    <strong>Lifetime Member:</strong> This membership never expires.
+                </div>
+            {% elif expiry_status.has_expiry %}
+                <!-- Expiry Timeline -->
+                <div class="row g-3 mt-3">
+                    <div class="col-md-6">
+                        <div class="p-3 border rounded bg-light">
+                            <small class="text-muted">Valid Until</small>
+                            <h5 class="mb-0">
+                                <i class="bi bi-calendar-event"></i>
+                                {{ member.membership_valid_until|date:"F d, Y" }}
+                            </h5>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 border rounded bg-light">
+                            <small class="text-muted">
+                                {% if expiry_status.is_expired %}Days Overdue{% else %}Days Remaining{% endif %}
+                            </small>
+                            <h5 class="mb-0 {% if expiry_status.is_expired %}text-danger{% elif expiry_status.is_expiring_soon %}text-warning{% else %}text-success{% endif %}">
+                                <i class="bi bi-hourglass-split"></i>
+                                {% if expiry_status.is_expired %}
+                                    {{ expiry_status.days_overdue }} days
+                                {% else %}
+                                    {{ expiry_status.days_remaining }} days
+                                {% endif %}
+                            </h5>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Progress Bar -->
+                {% comment %} {% if not expiry_status.is_expired %}
+                <div class="mt-4">
+                    <small class="text-muted">Membership Progress</small>
+                    <div class="progress" style="height: 25px;">
+                        {% with total_days=365 days_passed=365|add:expiry_status.days_remaining %}
+                        {% with percentage=days_passed|multiply:100|divide:total_days %}
+                        <div class="progress-bar {% if percentage >= 80 %}bg-danger{% elif percentage >= 60 %}bg-warning{% else %}bg-success{% endif %}" 
+                             role="progressbar" 
+                             style="width: {{ percentage }}%;" 
+                             aria-valuenow="{{ percentage }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                            {{ percentage|floatformat:0 }}% elapsed
+                        </div>
+                        {% endwith %}
+                        {% endwith %}
+                    </div>
+                </div>
+                {% endif %} {% endcomment %}
+                
+                <!-- Action Buttons -->
+                <div class="mt-4">
+                    {% if expiry_status.is_expired or expiry_status.is_expiring_soon %}
+                    <a href="{% url 'membership:payment_add' %}" class="btn btn-warning btn-lg">
+                        <i class="bi bi-arrow-clockwise"></i> Renew Membership
+                    </a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
 
             <!-- Quick Actions -->
             <div class="card mb-4 no-print">

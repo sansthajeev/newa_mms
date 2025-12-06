@@ -214,17 +214,80 @@ def member_list(request):
 
 @login_required
 def member_detail(request, pk):
-    """Display detailed information about a member"""
     member = get_object_or_404(Member, pk=pk)
-    payments = member.payments.all().order_by('-payment_date')
     children = member.children.all()
+    payments = Payment.objects.filter(member=member).order_by('-payment_date')
+    
+    # Calculate membership expiry status
+    from django.utils import timezone
+    today = timezone.now().date()
+    
+    expiry_status = {
+        'has_paid': payments.exists(),  # Has made any payment
+        'is_lifetime': member.membership_type == 'LIFETIME',
+        'has_expiry': False,
+        'is_expired': False,
+        'is_expiring_soon': False,
+        'days_remaining': None,
+        'days_overdue': None,
+        'status_class': '',  # CSS class for badge
+        'status_text': '',   # Display text
+        'status_icon': '',   # Bootstrap icon
+    }
+    
+    # Determine expiry status
+    if not expiry_status['has_paid']:
+        expiry_status['status_class'] = 'bg-secondary'
+        expiry_status['status_text'] = 'No Payment Made'
+        expiry_status['status_icon'] = 'bi-x-circle'
+    elif expiry_status['is_lifetime']:
+        expiry_status['status_class'] = 'bg-success'
+        expiry_status['status_text'] = 'Lifetime Membership'
+        expiry_status['status_icon'] = 'bi-infinity'
+    else:
+        # Regular membership - check expiry
+        expiry_status['has_expiry'] = True
+        
+        if member.membership_valid_until:
+            if member.membership_valid_until < today:
+                # Expired
+                expiry_status['is_expired'] = True
+                expiry_status['days_overdue'] = (today - member.membership_valid_until).days
+                expiry_status['status_class'] = 'bg-danger'
+                expiry_status['status_text'] = f'Expired ({expiry_status["days_overdue"]} days ago)'
+                expiry_status['status_icon'] = 'bi-exclamation-triangle-fill'
+            else:
+                # Active - check if expiring soon
+                expiry_status['days_remaining'] = (member.membership_valid_until - today).days
+                
+                if expiry_status['days_remaining'] <= 7:
+                    expiry_status['is_expiring_soon'] = True
+                    expiry_status['status_class'] = 'bg-danger'
+                    expiry_status['status_text'] = f'Expiring Soon ({expiry_status["days_remaining"]} days left)'
+                    expiry_status['status_icon'] = 'bi-exclamation-circle-fill'
+                elif expiry_status['days_remaining'] <= 30:
+                    expiry_status['is_expiring_soon'] = True
+                    expiry_status['status_class'] = 'bg-warning'
+                    expiry_status['status_text'] = f'Expiring in {expiry_status["days_remaining"]} days'
+                    expiry_status['status_icon'] = 'bi-clock-fill'
+                else:
+                    expiry_status['status_class'] = 'bg-success'
+                    expiry_status['status_text'] = f'Active ({expiry_status["days_remaining"]} days remaining)'
+                    expiry_status['status_icon'] = 'bi-check-circle-fill'
+        else:
+            # No expiry date set
+            expiry_status['status_class'] = 'bg-warning'
+            expiry_status['status_text'] = 'No Expiry Date Set'
+            expiry_status['status_icon'] = 'bi-calendar-x'
     
     context = {
         'member': member,
-        'payments': payments,
         'children': children,
-        'total_paid': member.get_total_paid(),
+        'payments': payments,
+        'total_paid' : member.get_total_paid(),
+        'expiry_status': expiry_status,  # Add this
     }
+    
     return render(request, 'membership/member_detail.html', context)
 
 
