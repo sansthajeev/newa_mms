@@ -2,7 +2,7 @@ from django.db import models
 from django.core.validators import RegexValidator
 from django.utils import timezone
 from decimal import Decimal
-from datetime import timedelta
+from datetime import timedelta, date
 from dateutil.relativedelta import relativedelta
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
@@ -55,14 +55,17 @@ class Member(models.Model):
         regex=r'^\+?1?\d{9,15}$',
         message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed."
     )
-    phone_number = models.CharField(
+    phone = models.CharField(
         validators=[phone_regex],
         max_length=17,
         verbose_name="Phone Number"
     )
-    email = models.EmailField(verbose_name="Email Address")
-    permanent_address = models.TextField(verbose_name="Permanent Address")
-    current_address = models.TextField(verbose_name="Current Address")
+    email = models.EmailField(
+        verbose_name="Email Address",
+        blank=True,
+        null=True
+    )
+    address = models.TextField(verbose_name="Address")
     date_of_birth = models.DateField(
         verbose_name="Date of Birth",
         blank=True,
@@ -76,15 +79,36 @@ class Member(models.Model):
         help_text="Upload member's photograph (JPG, PNG)"
     )
     
-    # Secondary Information
+    # Gender
+    GENDER_CHOICES = [
+        ('M', 'Male'),
+        ('F', 'Female'),
+        ('O', 'Other'),
+    ]
+    gender = models.CharField(
+        max_length=1,
+        choices=GENDER_CHOICES,
+        verbose_name="Gender",
+        blank=True,
+        null=True
+    )
+    
+    # Family Information
     father_name = models.CharField(max_length=200, verbose_name="Father's Name")
-    mother_name = models.CharField(max_length=200, verbose_name="Mother's Name")
+    grandfather_name = models.CharField(
+        max_length=200,
+        verbose_name="Grandfather's Name",
+        blank=True,
+        null=True
+    )
     spouse_name = models.CharField(
         max_length=200,
         blank=True,
         null=True,
         verbose_name="Spouse Name"
     )
+    
+    # Citizenship Information
     citizenship_number = models.CharField(
         max_length=50,
         unique=True,
@@ -159,6 +183,40 @@ class Member(models.Model):
     
     def __str__(self):
         return f"{self.membership_number} - {self.name}"
+    
+    @property
+    def age(self):
+        """Calculate age from date of birth"""
+        if not self.date_of_birth:
+            return None
+        
+        today = date.today()
+        age = today.year - self.date_of_birth.year
+        
+        # Adjust if birthday hasn't occurred this year
+        if today.month < self.date_of_birth.month or \
+           (today.month == self.date_of_birth.month and today.day < self.date_of_birth.day):
+            age -= 1
+        
+        return age
+    
+    @property
+    def days_until_expiry(self):
+        """Calculate days until membership expires"""
+        if not self.membership_valid_until:
+            return None
+        
+        today = date.today()
+        delta = self.membership_valid_until - today
+        return delta.days
+    
+    @property
+    def is_membership_expired(self):
+        """Check if membership has expired"""
+        if not self.membership_valid_until:
+            return False
+        
+        return date.today() > self.membership_valid_until
     
     def get_total_paid(self):
         """Calculate total amount paid by this member"""
@@ -269,12 +327,12 @@ class Child(models.Model):
         null=True
     )
     GENDER_CHOICES = [
-        ('MALE', 'Male'),
-        ('FEMALE', 'Female'),
-        ('OTHER', 'Other'),
+        ('M', 'Male'),
+        ('F', 'Female'),
+        ('O', 'Other'),
     ]
     gender = models.CharField(
-        max_length=10,
+        max_length=1,
         choices=GENDER_CHOICES,
         verbose_name="Gender",
         blank=True,
@@ -288,6 +346,22 @@ class Child(models.Model):
     
     def __str__(self):
         return f"{self.name} (Child of {self.member.name})"
+    
+    @property
+    def age(self):
+        """Calculate age from date of birth"""
+        if not self.date_of_birth:
+            return None
+        
+        today = date.today()
+        age = today.year - self.date_of_birth.year
+        
+        # Adjust if birthday hasn't occurred this year
+        if today.month < self.date_of_birth.month or \
+           (today.month == self.date_of_birth.month and today.day < self.date_of_birth.day):
+            age -= 1
+        
+        return age
 
 
 class MembershipFee(models.Model):

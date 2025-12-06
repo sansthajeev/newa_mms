@@ -72,8 +72,8 @@ class MemberForm(forms.ModelForm):
     class Meta:
         model = Member
         fields = [
-            'photograph', 'name', 'date_of_birth', 'phone_number', 'email', 'permanent_address', 'current_address',
-            'father_name', 'mother_name', 'spouse_name',
+            'photograph', 'name', 'date_of_birth', 'gender', 'phone', 'email', 'address',
+            'father_name', 'grandfather_name', 'spouse_name',
             'citizenship_number', 'citizenship_issue_date', 'citizenship_issue_district',
             'membership_type', 'payment_frequency', 'join_date', 'is_active'
         ]
@@ -81,12 +81,12 @@ class MemberForm(forms.ModelForm):
             'photograph': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Full Name'}),
             'date_of_birth': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'phone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+977XXXXXXXXXX'}),
+            'gender': forms.Select(attrs={'class': 'form-select'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+977XXXXXXXXXX'}),
             'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'email@example.com'}),
-            'permanent_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Permanent Address'}),
-            'current_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Current Address'}),
+            'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Full Address'}),
             'father_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': "Father's Name"}),
-            'mother_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': "Mother's Name"}),
+            'grandfather_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': "Grandfather's Name (Optional)"}),
             'spouse_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': "Spouse's Name (Optional)"}),
             'citizenship_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Citizenship Number'}),
             'citizenship_issue_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),

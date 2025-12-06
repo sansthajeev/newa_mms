@@ -1,22 +1,32 @@
-env
+# -------------------------------------
+# ENVIRONMENT & SECRETS
+# -------------------------------------
+# Python Virtual Environments
+env/
+venv/
+ENV/
+.venv/
+.python-version
+.vscode/
 
+# Environment Variables / Credentials
+.env
+local_settings.py
+*.db
+*.sqlite3
 
-index.md
-quickstart.md
-setup_guide.md
-visual_guide.md
-
+# -------------------------------------
+# PYTHON ARTIFACTS
+# -------------------------------------
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
-
-# C extensions
 *.so
+*.pyc
 
 # Distribution / packaging
 .Python
-env/
 build/
 develop-eggs/
 dist/
@@ -34,8 +44,6 @@ wheels/
 *.egg
 
 # PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
 
@@ -43,6 +51,9 @@ wheels/
 pip-log.txt
 pip-delete-this-directory.txt
 
+# -------------------------------------
+# TESTING / CACHE / REPORTS
+# -------------------------------------
 # Unit test / coverage reports
 htmlcov/
 .tox/
@@ -53,14 +64,25 @@ nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
+.spyderproject
+.spyproject
+.ropeproject
+
+# -------------------------------------
+# FRAMEWORK/TOOL SPECIFIC
+# -------------------------------------
+# Logs
+*.log
 
 # Translations
 *.mo
 *.pot
 
-# Django stuff:
-*.log
-local_settings.py
+# Django media files (if not served from a separate host)
+media/
+
+# Process/Lock files
+*.pid
 
 # Flask stuff:
 instance/
@@ -71,61 +93,24 @@ instance/
 
 # Sphinx documentation
 docs/_build/
-
-# PyBuilder
-target/
+# mkdocs documentation
+/site
 
 # Jupyter Notebook
 .ipynb_checkpoints
 
-# pyenv
-.python-version
-
-# celery beat schedule file
+# Celery beat schedule file
 celerybeat-schedule
 
 # SageMath parsed files
 *.sage.py
 
-# dotenv
-.env
-
-# virtualenv
-.venv
-venv/
-ENV/
-.vscode
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Rope project settings
-.ropeproject
-
-# mkdocs documentation
-/site
-
 # mypy
 .mypy_cache/
 
+# MacOS Metadata
 .DS_Store
-*.sqlite3
-media/
-*.pyc
-*.db
-*.pid
 
-*.md
-
-# Ignore Django Migrations in Development if you are working on team
-
-# Only for Development only
-# **/migrations/**
-# !**/migrations
-# !**/migrations/__init__.py
-
-*.log
-*.pot
-*.mo
-*.pyc
-__pycache__/
+# IGNORE ALL MARKDOWN FILES IS REMOVED:
+# The original file had a redundant and problematic entry:
+# *.md  <-- This was ignoring all your index.md, quickstart.md etc.

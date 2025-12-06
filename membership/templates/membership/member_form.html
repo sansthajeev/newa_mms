@@ -2,281 +2,809 @@
 {% load static %}
 {% load nepali_filters %}
 
-{% block title %}{{ action }} Member - Newa Samparka Samuha{% endblock %}
+{% block title %}{{ action }} Member{% endblock %}
 
 {% block extra_css %}
 <style>
-.nepali-date-input {
-    background: #f8f9fa;
-    padding: 10px;
-    border-radius: 5px;
-    border-left: 3px solid #0d6efd;
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    --card-shadow: 0 10px 40px rgba(0,0,0,0.08);
+    --input-focus: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
-.date-input-group {
+
+.page-header {
+    background: var(--primary-gradient);
+    color: white;
+    padding: 2.5rem 0;
+    margin: -1.5rem -1.5rem 2rem -1.5rem;
+    border-radius: 0 0 20px 20px;
+    box-shadow: var(--card-shadow);
+}
+
+.form-section {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--card-shadow);
+    transition: all 0.3s ease;
+}
+
+.form-section:hover {
+    box-shadow: 0 15px 50px rgba(0,0,0,0.12);
+    transform: translateY(-2px);
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.section-icon {
+    width: 45px;
+    height: 45px;
+    background: var(--primary-gradient);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.3rem;
+    margin-right: 1rem;
+}
+
+.section-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin: 0;
+}
+
+.form-control, .form-select {
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #667eea;
+    box-shadow: var(--input-focus);
+}
+
+.form-label {
+    font-weight: 600;
+    color: #4a5568;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.required-star {
+    color: #ef4444;
+    margin-left: 3px;
+}
+
+/* Dual Date Input System */
+.dual-date-container {
+    background: #f8fafc;
+    border: 2px dashed #cbd5e0;
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-top: 0.5rem;
+}
+
+.date-input-wrapper {
     position: relative;
 }
-.children-questionnaire {
-    background: #f8f9fa;
-    padding: 20px;
+
+.date-tab-selector {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    background: white;
+    padding: 0.4rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.date-tab {
+    flex: 1;
+    padding: 0.6rem 1rem;
+    border: none;
+    background: transparent;
     border-radius: 8px;
-    border-left: 4px solid #0d6efd;
-    margin-bottom: 20px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #64748b;
 }
-.children-count-input {
-    max-width: 150px;
+
+.date-tab.active {
+    background: var(--primary-gradient);
+    color: white;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
-.child-form {
-    animation: fadeIn 0.3s ease-in;
+
+.date-tab:hover:not(.active) {
+    background: #f1f5f9;
+    color: #475569;
 }
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
+
+.date-input-group {
+    display: none;
 }
+
+.date-input-group.active {
+    display: block;
+    animation: fadeInUp 0.3s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.nepali-date-inputs {
+    display: grid;
+    grid-template-columns: 2fr 2fr 1fr;
+    gap: 0.75rem;
+}
+
+.date-display-box {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.date-display-label {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.date-display-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #667eea;
+}
+
+.date-display-value i {
+    margin-right: 0.5rem;
+}
+
+/* Photo Upload */
+.photo-upload-area {
+    border: 3px dashed #cbd5e0;
+    border-radius: 15px;
+    padding: 2rem;
+    text-align: center;
+    background: #f8fafc;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.photo-upload-area:hover {
+    border-color: #667eea;
+    background: #f0f4ff;
+}
+
+.photo-preview {
+    margin-top: 1rem;
+}
+
+.photo-preview img {
+    max-width: 200px;
+    border-radius: 15px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+/* Children Questionnaire */
+.children-questionnaire {
+    background: linear-gradient(135deg, #667eea15, #764ba215);
+    border: 2px solid #667eea30;
+    border-radius: 15px;
+    padding: 1.5rem;
+}
+
+.radio-card {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.radio-card:hover {
+    border-color: #667eea;
+    background: #f8fafc;
+}
+
+.radio-card input[type="radio"]:checked + label {
+    color: #667eea;
+    font-weight: 700;
+}
+
+.child-form-card {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    animation: slideIn 0.4s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.child-number-badge {
+    background: var(--primary-gradient);
+    color: white;
+    padding: 0.5rem 1.25rem;
+    border-radius: 20px;
+    font-weight: 700;
+    display: inline-block;
+    margin-bottom: 1rem;
+}
+
+/* Action Buttons */
+.btn-primary {
+    background: var(--primary-gradient);
+    border: none;
+    padding: 0.875rem 2.5rem;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1rem;
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+    background: #e2e8f0;
+    color: #475569;
+    border: none;
+    padding: 0.875rem 2.5rem;
+    border-radius: 12px;
+    font-weight: 700;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background: #cbd5e0;
+    transform: translateY(-2px);
+}
+
 .hidden {
     display: none;
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Help Text */
+.form-text {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-text i {
+    color: #667eea;
 }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="bi bi-person-plus"></i> {{ action }} Member</h1>
-        <a href="{% url 'membership:member_list' %}" class="btn btn-secondary">
-            <i class="bi bi-arrow-left"></i> Back to List
-        </a>
-    </div>
-
-    <div class="card">
-        <div class="card-body">
-            <form method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-                
-                <h5 class="border-bottom pb-2 mb-3"><i class="bi bi-person"></i> Primary Information</h5>
-                
-                <!-- Photograph Upload -->
-                <div class="row">
-                    <div class="col-md-12 mb-3">
-                        <label class="form-label">Photograph</label>
-                        {{ form.photograph }}
-                        {% if form.photograph.errors %}<div class="text-danger small">{{ form.photograph.errors }}</div>{% endif %}
-                        <small class="text-muted d-block mt-1">
-                            <i class="bi bi-image"></i> Upload member's photograph (JPG, PNG - Max 5MB)
-                        </small>
-                        {% if form.instance.photograph %}
-                        <div class="mt-2">
-                            <img src="{{ form.instance.photograph.url }}" alt="Current photo" class="img-thumbnail" style="max-width: 150px;">
-                            <small class="d-block text-muted">Current photograph</small>
-                        </div>
-                        {% endif %}
-                    </div>
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container-fluid">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="mb-2"><i class="bi bi-person-plus-fill"></i> {{ action }} Member</h1>
+                    <p class="mb-0 opacity-90">Fill in the member details carefully</p>
                 </div>
-                
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Name <span class="text-danger">*</span></label>
-                        {{ form.name }}
-                        {% if form.name.errors %}<div class="text-danger small">{{ form.name.errors }}</div>{% endif %}
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Father's Name <span class="text-danger">*</span></label>
-                        {{ form.father_name }}
-                        {% if form.father_name.errors %}<div class="text-danger small">{{ form.father_name.errors }}</div>{% endif %}
-                    </div>
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Grandfather's Name</label>
-                        {{ form.grandfather_name }}
-                        {% if form.grandfather_name.errors %}<div class="text-danger small">{{ form.grandfather_name.errors }}</div>{% endif %}
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Spouse's Name</label>
-                        {{ form.spouse_name }}
-                        {% if form.spouse_name.errors %}<div class="text-danger small">{{ form.spouse_name.errors }}</div>{% endif %}
-                    </div>
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Date of Birth</label>
-                        <div class="date-input-group">
-                            <label class="form-label small text-muted">English (AD)</label>
-                            {{ form.date_of_birth }}
-                            {% if form.date_of_birth.errors %}<div class="text-danger small">{{ form.date_of_birth.errors }}</div>{% endif %}
-                        </div>
-                        <div class="nepali-date-input mt-2">
-                            <label class="form-label small text-muted mb-1">Nepali (BS)</label>
-                            <input type="text" id="dob_nepali" class="form-control" placeholder="YYYY-MM-DD (BS)" readonly>
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Gender <span class="text-danger">*</span></label>
-                        {{ form.gender }}
-                        {% if form.gender.errors %}<div class="text-danger small">{{ form.gender.errors }}</div>{% endif %}
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Phone <span class="text-danger">*</span></label>
-                        {{ form.phone }}
-                        {% if form.phone.errors %}<div class="text-danger small">{{ form.phone.errors }}</div>{% endif %}
-                    </div>
-                </div>
-                
-                <h5 class="border-bottom pb-2 mb-3 mt-4"><i class="bi bi-geo-alt-fill"></i> Address</h5>
-                <div class="row">
-                    <div class="col-md-12 mb-3">
-                        <label class="form-label">Address <span class="text-danger">*</span></label>
-                        {{ form.address }}
-                        {% if form.address.errors %}<div class="text-danger small">{{ form.address.errors }}</div>{% endif %}
-                    </div>
-                </div>
-                
-                <h5 class="border-bottom pb-2 mb-3 mt-4"><i class="bi bi-card-text"></i> Citizenship Details</h5>
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Citizenship Number <span class="text-danger">*</span></label>
-                        {{ form.citizenship_number }}
-                        {% if form.citizenship_number.errors %}<div class="text-danger small">{{ form.citizenship_number.errors }}</div>{% endif %}
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Issue Date</label>
-                        <div class="date-input-group">
-                            <label class="form-label small text-muted">English (AD)</label>
-                            {{ form.citizenship_issue_date }}
-                            {% if form.citizenship_issue_date.errors %}<div class="text-danger small">{{ form.citizenship_issue_date.errors }}</div>{% endif %}
-                        </div>
-                        <div class="nepali-date-input mt-2">
-                            <label class="form-label small text-muted mb-1">Nepali (BS)</label>
-                            <input type="text" id="citizenship_issue_date_nepali" class="form-control" placeholder="YYYY-MM-DD (BS)" readonly>
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Issue District</label>
-                        {{ form.citizenship_issue_district }}
-                        {% if form.citizenship_issue_district.errors %}<div class="text-danger small">{{ form.citizenship_issue_district.errors }}</div>{% endif %}
-                    </div>
-                </div>
-                
-                <!-- Children Questionnaire -->
-                <h5 class="border-bottom pb-2 mb-3 mt-4"><i class="bi bi-people-fill"></i> Children Information</h5>
-                
-                <div class="children-questionnaire">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Do you have children?</label>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="has_children" id="has_children_yes" value="yes">
-                            <label class="form-check-label" for="has_children_yes">
-                                Yes
-                            </label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="has_children" id="has_children_no" value="no" checked>
-                            <label class="form-check-label" for="has_children_no">
-                                No
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div id="children_count_section" class="hidden">
-                        <label class="form-label fw-bold">How many children do you have?</label>
-                        <input type="number" id="children_count" class="form-control children-count-input" min="0" max="20" value="0" placeholder="Enter number">
-                        <small class="text-muted">Maximum 20 children</small>
-                    </div>
-                </div>
-                
-                {{ formset.management_form }}
-                <div id="formset">
-                    {% for child_form in formset %}
-                        <div class="child-form border rounded p-3 mb-3" data-form-index="{{ forloop.counter0 }}">
-                            <h6 class="text-primary mb-3">
-                                <i class="bi bi-person-badge"></i> Child #<span class="child-number">{{ forloop.counter }}</span>
-                            </h6>
-                            <div class="row">
-                                <div class="col-md-5 mb-2">
-                                    <label class="form-label">Child's Name <span class="text-danger">*</span></label>
-                                    {{ child_form.name }}
-                                </div>
-                                <div class="col-md-3 mb-2">
-                                    <label class="form-label">Date of Birth</label>
-                                    <div class="date-input-group child-date-group">
-                                        {{ child_form.date_of_birth }}
-                                    </div>
-                                </div>
-                                <div class="col-md-3 mb-2">
-                                    <label class="form-label">Gender <span class="text-danger">*</span></label>
-                                    {{ child_form.gender }}
-                                </div>
-                                <div class="col-md-1 mb-2 d-flex align-items-end">
-                                    {{ child_form.DELETE }}
-                                    <label class="form-label ms-2 small">Delete</label>
-                                </div>
-                            </div>
-                            {{ child_form.id }}
-                        </div>
-                    {% endfor %}
-                </div>
-                
-                <h5 class="border-bottom pb-2 mb-3 mt-4"><i class="bi bi-card-checklist"></i> Membership Details</h5>
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Membership Type <span class="text-danger">*</span></label>
-                        {{ form.membership_type }}
-                        {% if form.membership_type.errors %}<div class="text-danger small">{{ form.membership_type.errors }}</div>{% endif %}
-                        <small class="text-muted d-block mt-1">
-                            <i class="bi bi-info-circle"></i> Regular or Lifetime Membership
-                        </small>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Payment Frequency <span class="text-danger">*</span></label>
-                        {{ form.payment_frequency }}
-                        {% if form.payment_frequency.errors %}<div class="text-danger small">{{ form.payment_frequency.errors }}</div>{% endif %}
-                        <small class="text-muted d-block mt-1">
-                            <i class="bi bi-info-circle"></i> How often to pay membership fees
-                        </small>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Join Date</label>
-                        <div class="date-input-group">
-                            <label class="form-label small text-muted">English (AD)</label>
-                            {{ form.join_date }}
-                            {% if form.join_date.errors %}<div class="text-danger small">{{ form.join_date.errors }}</div>{% endif %}
-                        </div>
-                        <div class="nepali-date-input mt-2">
-                            <label class="form-label small text-muted mb-1">Nepali (BS)</label>
-                            <input type="text" id="join_date_nepali" class="form-control" placeholder="YYYY-MM-DD (BS)" readonly>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="mb-3">
-                    <div class="form-check">
-                        {{ form.is_active }}
-                        <label class="form-check-label">Active Member</label>
-                    </div>
-                </div>
-                
-                <div class="d-flex gap-2 mt-4">
-                    <button type="submit" class="btn btn-primary btn-lg">
-                        <i class="bi bi-save"></i> Save Member
-                    </button>
-                    <a href="{% url 'membership:member_list' %}" class="btn btn-secondary btn-lg">
-                        <i class="bi bi-x-circle"></i> Cancel
-                    </a>
-                </div>
-            </form>
+                <a href="{% url 'membership:member_list' %}" class="btn btn-light">
+                    <i class="bi bi-arrow-left"></i> Back to List
+                </a>
+            </div>
         </div>
     </div>
+
+    <form method="post" enctype="multipart/form-data" id="memberForm">
+        {% csrf_token %}
+        
+        <!-- Personal Information Section -->
+        <div class="form-section">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="bi bi-person-fill"></i>
+                </div>
+                <h2 class="section-title">Personal Information</h2>
+            </div>
+            
+            <!-- Photo Upload -->
+            <div class="mb-4">
+                <label class="form-label">Member Photograph</label>
+                <div class="photo-upload-area" onclick="document.getElementById('id_photograph').click()">
+                    <i class="bi bi-cloud-upload" style="font-size: 3rem; color: #667eea;"></i>
+                    <p class="mb-0 mt-2"><strong>Click to upload</strong> or drag and drop</p>
+                    <small class="text-muted">JPG, PNG (Max 5MB)</small>
+                    {{ form.photograph }}
+                </div>
+                {% if form.instance.photograph %}
+                <div class="photo-preview">
+                    <img src="{{ form.instance.photograph.url }}" alt="Current photo">
+                    <p class="small text-muted mt-2">Current photograph</p>
+                </div>
+                {% endif %}
+                <div id="photoPreview" class="photo-preview" style="display:none;"></div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Full Name<span class="required-star">*</span></label>
+                    {{ form.name }}
+                    {% if form.name.errors %}<div class="text-danger small mt-1">{{ form.name.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Email Address</label>
+                    {{ form.email }}
+                    {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors }}</div>{% endif %}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Father's Name<span class="required-star">*</span></label>
+                    {{ form.father_name }}
+                    {% if form.father_name.errors %}<div class="text-danger small mt-1">{{ form.father_name.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Grandfather's Name</label>
+                    {{ form.grandfather_name }}
+                    {% if form.grandfather_name.errors %}<div class="text-danger small mt-1">{{ form.grandfather_name.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Spouse's Name</label>
+                    {{ form.spouse_name }}
+                    {% if form.spouse_name.errors %}<div class="text-danger small mt-1">{{ form.spouse_name.errors }}</div>{% endif %}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Gender</label>
+                    {{ form.gender }}
+                    {% if form.gender.errors %}<div class="text-danger small mt-1">{{ form.gender.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Phone Number<span class="required-star">*</span></label>
+                    {{ form.phone }}
+                    {% if form.phone.errors %}<div class="text-danger small mt-1">{{ form.phone.errors }}</div>{% endif %}
+                </div>
+            </div>
+
+            <!-- Date of Birth with Dual Input -->
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <label class="form-label">Date of Birth</label>
+                    <div class="dual-date-container">
+                        <div class="date-tab-selector">
+                            <button type="button" class="date-tab active" data-target="dob-english">
+                                <i class="bi bi-calendar3"></i> English Date (AD)
+                            </button>
+                            <button type="button" class="date-tab" data-target="dob-nepali">
+                                <i class="bi bi-calendar2-event"></i> Nepali Date (BS)
+                            </button>
+                        </div>
+
+                        <!-- English Date Input -->
+                        <div class="date-input-group active" id="dob-english">
+                            {{ form.date_of_birth }}
+                        </div>
+
+                        <!-- Nepali Date Input -->
+                        <div class="date-input-group" id="dob-nepali">
+                            <div class="nepali-date-inputs">
+                                <div>
+                                    <label class="form-label small">Year (वर्ष)</label>
+                                    <input type="number" class="form-control" id="dob_bs_year" placeholder="2081" min="2000" max="2089">
+                                </div>
+                                <div>
+                                    <label class="form-label small">Month (महिना)</label>
+                                    <select class="form-select" id="dob_bs_month">
+                                        <option value="">Select...</option>
+                                        <option value="1">Baisakh (बैशाख)</option>
+                                        <option value="2">Jestha (जेष्ठ)</option>
+                                        <option value="3">Ashadh (आषाढ)</option>
+                                        <option value="4">Shrawan (श्रावण)</option>
+                                        <option value="5">Bhadra (भाद्र)</option>
+                                        <option value="6">Ashwin (आश्विन)</option>
+                                        <option value="7">Kartik (कार्तिक)</option>
+                                        <option value="8">Mangsir (मंसिर)</option>
+                                        <option value="9">Poush (पौष)</option>
+                                        <option value="10">Magh (माघ)</option>
+                                        <option value="11">Falgun (फाल्गुन)</option>
+                                        <option value="12">Chaitra (चैत्र)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="form-label small">Day (दिन)</label>
+                                    <input type="number" class="form-control" id="dob_bs_day" placeholder="15" min="1" max="32">
+                                </div>
+                            </div>
+                        </div>
+
+                        {% comment %} <!-- Date Display -->
+                        <div class="date-display-box">
+                            <div class="date-display-label">Selected Date</div>
+                            <div class="date-display-value" id="dob_display">
+                                <i class="bi bi-calendar-check"></i> No date selected
+                            </div>
+                        </div> {% endcomment %}
+                    </div>
+                    {% if form.date_of_birth.errors %}<div class="text-danger small mt-1">{{ form.date_of_birth.errors }}</div>{% endif %}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <label class="form-label">Address<span class="required-star">*</span></label>
+                    {{ form.address }}
+                    {% if form.address.errors %}<div class="text-danger small mt-1">{{ form.address.errors }}</div>{% endif %}
+                    <small class="form-text">
+                        <i class="bi bi-geo-alt"></i> Full residential address
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Citizenship Section -->
+        <div class="form-section">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="bi bi-card-text"></i>
+                </div>
+                <h2 class="section-title">Citizenship Details</h2>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Citizenship Number<span class="required-star">*</span></label>
+                    {{ form.citizenship_number }}
+                    {% if form.citizenship_number.errors %}<div class="text-danger small mt-1">{{ form.citizenship_number.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Issue District</label>
+                    {{ form.citizenship_issue_district }}
+                    {% if form.citizenship_issue_district.errors %}<div class="text-danger small mt-1">{{ form.citizenship_issue_district.errors }}</div>{% endif %}
+                </div>
+            </div>
+
+            <!-- Citizenship Issue Date with Dual Input -->
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <label class="form-label">Citizenship Issue Date</label>
+                    <div class="dual-date-container">
+                        <div class="date-tab-selector">
+                            <button type="button" class="date-tab active" data-target="cit-english">
+                                <i class="bi bi-calendar3"></i> English Date (AD)
+                            </button>
+                            <button type="button" class="date-tab" data-target="cit-nepali">
+                                <i class="bi bi-calendar2-event"></i> Nepali Date (BS)
+                            </button>
+                        </div>
+
+                        <div class="date-input-group active" id="cit-english">
+                            {{ form.citizenship_issue_date }}
+                        </div>
+
+                        <div class="date-input-group" id="cit-nepali">
+                            <div class="nepali-date-inputs">
+                                <div>
+                                    <label class="form-label small">Year</label>
+                                    <input type="number" class="form-control" id="cit_bs_year" placeholder="2081" min="2000" max="2089">
+                                </div>
+                                <div>
+                                    <label class="form-label small">Month</label>
+                                    <select class="form-select" id="cit_bs_month">
+                                        <option value="">Select...</option>
+                                        <option value="1">Baisakh</option>
+                                        <option value="2">Jestha</option>
+                                        <option value="3">Ashadh</option>
+                                        <option value="4">Shrawan</option>
+                                        <option value="5">Bhadra</option>
+                                        <option value="6">Ashwin</option>
+                                        <option value="7">Kartik</option>
+                                        <option value="8">Mangsir</option>
+                                        <option value="9">Poush</option>
+                                        <option value="10">Magh</option>
+                                        <option value="11">Falgun</option>
+                                        <option value="12">Chaitra</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="form-label small">Day</label>
+                                    <input type="number" class="form-control" id="cit_bs_day" placeholder="15" min="1" max="32">
+                                </div>
+                            </div>
+                        </div>
+
+                        {% comment %} <div class="date-display-box">
+                            <div class="date-display-label">Selected Date</div>
+                            <div class="date-display-value" id="cit_display">
+                                <i class="bi bi-calendar-check"></i> No date selected
+                            </div>
+                        </div> {% endcomment %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Children Section -->
+        <div class="form-section">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <h2 class="section-title">Children Information</h2>
+            </div>
+
+            <div class="children-questionnaire mb-4">
+                <p class="fw-bold mb-3"><i class="bi bi-question-circle"></i> Do you have children?</p>
+                
+                <div class="radio-card">
+                    <input class="form-check-input" type="radio" name="has_children" id="has_children_yes" value="yes">
+                    <label class="form-check-label ms-2" for="has_children_yes">
+                        <i class="bi bi-check-circle text-success"></i> Yes, I have children
+                    </label>
+                </div>
+                
+                <div class="radio-card">
+                    <input class="form-check-input" type="radio" name="has_children" id="has_children_no" value="no" checked>
+                    <label class="form-check-label ms-2" for="has_children_no">
+                        <i class="bi bi-x-circle text-danger"></i> No, I don't have children
+                    </label>
+                </div>
+
+                <div id="children_count_section" class="hidden mt-3 fade-in">
+                    <label class="form-label fw-bold">How many children?</label>
+                    <input type="number" id="children_count" class="form-control" style="max-width: 200px;" min="0" max="20" value="0" placeholder="Enter number">
+                    <small class="form-text"><i class="bi bi-info-circle"></i> Maximum 20 children</small>
+                </div>
+            </div>
+
+            {{ formset.management_form }}
+            <div id="formset">
+                {% for child_form in formset %}
+                    <div class="child-form-card" data-form-index="{{ forloop.counter0 }}">
+                        <span class="child-number-badge">
+                            <i class="bi bi-person-badge"></i> Child #<span class="child-number">{{ forloop.counter }}</span>
+                        </span>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Child's Name<span class="required-star">*</span></label>
+                                {{ child_form.name }}
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Date of Birth</label>
+                                {{ child_form.date_of_birth }}
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Gender</label>
+                                {{ child_form.gender }}
+                            </div>
+                            <div class="col-md-2 mb-3 d-flex align-items-end">
+                                <div class="form-check">
+                                    {{ child_form.DELETE }}
+                                    <label class="form-check-label ms-1 small">Delete</label>
+                                </div>
+                            </div>
+                        </div>
+                        {{ child_form.id }}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Membership Section -->
+        <div class="form-section">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="bi bi-card-checklist"></i>
+                </div>
+                <h2 class="section-title">Membership Details</h2>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Membership Type<span class="required-star">*</span></label>
+                    {{ form.membership_type }}
+                    <small class="form-text">
+                        <i class="bi bi-info-circle"></i> Choose between Regular or Lifetime membership
+                    </small>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Payment Frequency<span class="required-star">*</span></label>
+                    {{ form.payment_frequency }}
+                    <small class="form-text">
+                        <i class="bi bi-info-circle"></i> How often membership fees are paid
+                    </small>
+                </div>
+            </div>
+
+            <!-- Join Date with Dual Input -->
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <label class="form-label">Join Date</label>
+                    <div class="dual-date-container">
+                        <div class="date-tab-selector">
+                            <button type="button" class="date-tab active" data-target="join-english">
+                                <i class="bi bi-calendar3"></i> English Date (AD)
+                            </button>
+                            <button type="button" class="date-tab" data-target="join-nepali">
+                                <i class="bi bi-calendar2-event"></i> Nepali Date (BS)
+                            </button>
+                        </div>
+
+                        <div class="date-input-group active" id="join-english">
+                            {{ form.join_date }}
+                        </div>
+
+                        <div class="date-input-group" id="join-nepali">
+                            <div class="nepali-date-inputs">
+                                <div>
+                                    <label class="form-label small">Year</label>
+                                    <input type="number" class="form-control" id="join_bs_year" placeholder="2081" min="2000" max="2089">
+                                </div>
+                                <div>
+                                    <label class="form-label small">Month</label>
+                                    <select class="form-select" id="join_bs_month">
+                                        <option value="">Select...</option>
+                                        <option value="1">Baisakh</option>
+                                        <option value="2">Jestha</option>
+                                        <option value="3">Ashadh</option>
+                                        <option value="4">Shrawan</option>
+                                        <option value="5">Bhadra</option>
+                                        <option value="6">Ashwin</option>
+                                        <option value="7">Kartik</option>
+                                        <option value="8">Mangsir</option>
+                                        <option value="9">Poush</option>
+                                        <option value="10">Magh</option>
+                                        <option value="11">Falgun</option>
+                                        <option value="12">Chaitra</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="form-label small">Day</label>
+                                    <input type="number" class="form-control" id="join_bs_day" placeholder="15" min="1" max="32">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="date-display-box">
+                            <div class="date-display-label">Selected Date</div>
+                            <div class="date-display-value" id="join_display">
+                                <i class="bi bi-calendar-check"></i> No date selected
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-check">
+                {{ form.is_active }}
+                <label class="form-check-label ms-2" for="id_is_active">
+                    <i class="bi bi-check-circle-fill text-success"></i> Active Member
+                </label>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="text-center mb-5">
+            <button type="submit" class="btn btn-primary btn-lg me-3">
+                <i class="bi bi-save"></i> Save Member
+            </button>
+            <a href="{% url 'membership:member_list' %}" class="btn btn-secondary btn-lg">
+                <i class="bi bi-x-circle"></i> Cancel
+            </a>
+        </div>
+    </form>
 </div>
 
 <script src="{% static 'js/nepali-date-picker.js' %}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Nepali Date Pickers for main form
-    const dobPicker = new NepaliDatePicker('id_date_of_birth', 'dob_nepali');
-    const citizenshipIssueDatePicker = new NepaliDatePicker('id_citizenship_issue_date', 'citizenship_issue_date_nepali');
-    const joinDatePicker = new NepaliDatePicker('id_join_date', 'join_date_nepali');
+    const datePicker = new NepaliDatePicker();
     
+    // Initialize Nepali Date Pickers for main form dates
+    datePicker.init('id_date_of_birth');
+    datePicker.init('id_citizenship_issue_date');
+    datePicker.init('id_join_date');
+    
+    // DATE TAB SWITCHING FUNCTIONALITY
+    document.querySelectorAll('.date-tab').forEach(tab => {
+        tab.addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = this.dataset.target;
+            const container = this.closest('.dual-date-container');
+            
+            // Update active tab
+            container.querySelectorAll('.date-tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Show corresponding input group
+            container.querySelectorAll('.date-input-group').forEach(g => g.classList.remove('active'));
+            const targetGroup = container.querySelector(`#${target}`);
+            if (targetGroup) {
+                targetGroup.classList.add('active');
+            }
+        });
+    });
+
+    // Photo Preview
+    const photoInput = document.getElementById('id_photograph');
+    if (photoInput) {
+        photoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('photoPreview');
+                    preview.innerHTML = `
+                        <img src="${e.target.result}" alt="Preview" style="max-width: 200px; border-radius: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.15);">
+                        <p class="small text-muted mt-2">Preview</p>
+                    `;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
     // Children Questionnaire Logic
     const hasChildrenYes = document.getElementById('has_children_yes');
     const hasChildrenNo = document.getElementById('has_children_no');
@@ -285,24 +813,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const formsetContainer = document.getElementById('formset');
     const totalFormsInput = document.querySelector('input[name="children-TOTAL_FORMS"]');
     
-    // Get initial count of existing children
     const initialChildCount = parseInt(totalFormsInput.value) || 0;
     
-    // Set initial state based on existing children
     if (initialChildCount > 0) {
         hasChildrenYes.checked = true;
         childrenCountSection.classList.remove('hidden');
         childrenCountInput.value = initialChildCount;
-        // Show existing forms
         updateChildrenDisplay(initialChildCount);
     }
     
-    // Handle "Do you have children?" radio buttons
     hasChildrenYes.addEventListener('change', function() {
         if (this.checked) {
             childrenCountSection.classList.remove('hidden');
             childrenCountInput.value = 1;
-            childrenCountInput.focus();
             updateChildrenForms(1);
         }
     });
@@ -315,7 +838,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Handle children count input
     childrenCountInput.addEventListener('change', function() {
         let count = parseInt(this.value) || 0;
         if (count < 0) count = 0;
@@ -325,28 +847,23 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     function updateChildrenForms(count) {
-        const currentForms = formsetContainer.querySelectorAll('.child-form');
+        const currentForms = formsetContainer.querySelectorAll('.child-form-card');
         const currentCount = currentForms.length;
         
         if (count > currentCount) {
-            // Add new forms
             for (let i = currentCount; i < count; i++) {
                 addChildForm(i);
             }
         } else if (count < currentCount) {
-            // Remove excess forms
             for (let i = currentCount - 1; i >= count; i--) {
                 const form = currentForms[i];
-                // Mark for deletion if it has an ID (existing record)
                 const deleteCheckbox = form.querySelector('input[type="checkbox"][name$="-DELETE"]');
                 if (deleteCheckbox) {
                     const idInput = form.querySelector('input[name$="-id"]');
                     if (idInput && idInput.value) {
-                        // Existing child - mark for deletion
                         deleteCheckbox.checked = true;
                         form.style.display = 'none';
                     } else {
-                        // New unsaved child - remove completely
                         form.remove();
                     }
                 } else {
@@ -355,18 +872,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // Update total forms count
         totalFormsInput.value = count;
-        
-        // Update visible forms display
         updateChildrenDisplay(count);
-        
-        // Renumber children
         renumberChildren();
     }
     
     function updateChildrenDisplay(count) {
-        const allForms = formsetContainer.querySelectorAll('.child-form');
+        const allForms = formsetContainer.querySelectorAll('.child-form-card');
         allForms.forEach((form, index) => {
             if (index < count) {
                 form.style.display = 'block';
@@ -381,25 +893,23 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function addChildForm(index) {
         const newForm = document.createElement('div');
-        newForm.className = 'child-form border rounded p-3 mb-3';
+        newForm.className = 'child-form-card';
         newForm.dataset.formIndex = index;
         newForm.innerHTML = `
-            <h6 class="text-primary mb-3">
+            <span class="child-number-badge">
                 <i class="bi bi-person-badge"></i> Child #<span class="child-number">${index + 1}</span>
-            </h6>
+            </span>
             <div class="row">
-                <div class="col-md-5 mb-2">
-                    <label class="form-label">Child's Name <span class="text-danger">*</span></label>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Child's Name<span class="required-star">*</span></label>
                     <input type="text" name="children-${index}-name" class="form-control" id="id_children-${index}-name">
                 </div>
-                <div class="col-md-3 mb-2">
+                <div class="col-md-3 mb-3">
                     <label class="form-label">Date of Birth</label>
-                    <div class="date-input-group child-date-group">
-                        <input type="date" name="children-${index}-date_of_birth" class="form-control" id="id_children-${index}-date_of_birth">
-                    </div>
+                    <input type="date" name="children-${index}-date_of_birth" class="form-control" id="id_children-${index}-date_of_birth">
                 </div>
-                <div class="col-md-3 mb-2">
-                    <label class="form-label">Gender <span class="text-danger">*</span></label>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Gender</label>
                     <select name="children-${index}-gender" class="form-select" id="id_children-${index}-gender">
                         <option value="">---------</option>
                         <option value="M">Male</option>
@@ -407,9 +917,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         <option value="O">Other</option>
                     </select>
                 </div>
-                <div class="col-md-1 mb-2 d-flex align-items-end">
-                    <input type="checkbox" name="children-${index}-DELETE" class="form-check-input" id="id_children-${index}-DELETE">
-                    <label class="form-label ms-2 small">Delete</label>
+                <div class="col-md-2 mb-3 d-flex align-items-end">
+                    <div class="form-check">
+                        <input type="checkbox" name="children-${index}-DELETE" class="form-check-input" id="id_children-${index}-DELETE">
+                        <label class="form-check-label ms-1 small">Delete</label>
+                    </div>
                 </div>
             </div>
             <input type="hidden" name="children-${index}-id" id="id_children-${index}-id">
@@ -418,7 +930,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function renumberChildren() {
-        const visibleForms = formsetContainer.querySelectorAll('.child-form:not([style*="display: none"])');
+        const visibleForms = formsetContainer.querySelectorAll('.child-form-card:not([style*="display: none"])');
         visibleForms.forEach((form, index) => {
             const numberSpan = form.querySelector('.child-number');
             if (numberSpan) {

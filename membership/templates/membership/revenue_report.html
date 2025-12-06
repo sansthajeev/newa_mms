@@ -1,108 +1,471 @@
 {% extends 'membership/base.html' %}
+{% load static %}
+{% load nepali_filters %}
 
 {% block title %}Revenue Report - Newa Samparka Samuha{% endblock %}
 
+{% block extra_css %}
+<style>
+:root {
+    --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --gradient-success: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    --gradient-info: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --gradient-warning: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    --card-shadow: 0 10px 40px rgba(0,0,0,0.1);
+}
+
+.page-header {
+    background: var(--gradient-primary);
+    color: white;
+    padding: 2.5rem 0;
+    margin: -1.5rem -1.5rem 2rem -1.5rem;
+    border-radius: 0 0 25px 25px;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+}
+
+.filter-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    border-radius: 20px;
+    padding: 2rem;
+    color: white;
+    box-shadow: var(--card-shadow);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    transition: all 0.5s ease;
+}
+
+.stat-card:hover::before {
+    top: -60%;
+    right: -60%;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 50px rgba(0,0,0,0.2);
+}
+
+.stat-card.revenue {
+    background: var(--gradient-success);
+}
+
+.stat-card.payments {
+    background: var(--gradient-info);
+}
+
+.stat-icon {
+    font-size: 3rem;
+    opacity: 0.3;
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin: 0.5rem 0;
+    position: relative;
+    z-index: 1;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    position: relative;
+    z-index: 1;
+}
+
+.stat-period {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    margin-top: 0.5rem;
+    position: relative;
+    z-index: 1;
+}
+
+.report-card {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 2rem;
+    transition: all 0.3s ease;
+}
+
+.report-card:hover {
+    box-shadow: 0 15px 50px rgba(0,0,0,0.15);
+    transform: translateY(-3px);
+}
+
+.report-card-header {
+    background: var(--gradient-primary);
+    color: white;
+    padding: 1.5rem 2rem;
+    font-weight: 700;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.report-card-header.success {
+    background: var(--gradient-success);
+}
+
+.report-card-header.warning {
+    background: var(--gradient-warning);
+}
+
+.report-card-header.dark {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+}
+
+.report-card-body {
+    padding: 2rem;
+}
+
+.table-modern {
+    margin-bottom: 0;
+}
+
+.table-modern thead {
+    background: #f8f9fa;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    color: #4a5568;
+}
+
+.table-modern tbody tr {
+    transition: all 0.2s ease;
+}
+
+.table-modern tbody tr:hover {
+    background: #f8fafc;
+    transform: scale(1.01);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.table-modern tfoot {
+    background: #f1f5f9;
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+.amount-highlight {
+    color: #10b981;
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+.badge-payment-mode {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.badge-membership {
+    padding: 0.4rem 0.9rem;
+    border-radius: 15px;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.date-badge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.3rem 0.8rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #94a3b8;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* Print Styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .page-header {
+        margin: 0;
+        border-radius: 0;
+    }
+    
+    .report-card {
+        page-break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .stat-card {
+        box-shadow: none;
+        border: 1px solid #e2e8f0;
+    }
+}
+
+/* Filter Form Styling */
+.filter-form .form-label {
+    font-weight: 600;
+    color: #4a5568;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.filter-form .form-control {
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.filter-form .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.btn-generate {
+    background: var(--gradient-primary);
+    border: none;
+    padding: 0.875rem 2rem;
+    border-radius: 12px;
+    font-weight: 700;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.btn-generate:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+}
+
+.btn-print {
+    background: white;
+    color: #667eea;
+    border: 2px solid white;
+    padding: 0.75rem 2rem;
+    border-radius: 12px;
+    font-weight: 700;
+    transition: all 0.3s ease;
+}
+
+.btn-print:hover {
+    background: rgba(255,255,255,0.2);
+    transform: translateY(-2px);
+}
+
+.quick-filters {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.quick-filter-btn {
+    padding: 0.5rem 1.25rem;
+    border: 2px solid #e2e8f0;
+    background: white;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.quick-filter-btn:hover {
+    border-color: #667eea;
+    background: #f0f4ff;
+    color: #667eea;
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin: 1rem 0;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="bi bi-graph-up"></i> Revenue Report</h1>
-        <button onclick="window.print()" class="btn btn-primary no-print">
-            <i class="bi bi-printer"></i> Print Report
-        </button>
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container-fluid">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="mb-2"><i class="bi bi-graph-up-arrow"></i> Revenue Report</h1>
+                    <p class="mb-0 opacity-90">Financial overview and transaction analysis</p>
+                </div>
+                <button onclick="window.print()" class="btn btn-print no-print">
+                    <i class="bi bi-printer-fill"></i> Print Report
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Date Range Filter -->
-    <div class="card mb-4 no-print">
-        <div class="card-body">
-            <form method="get" class="row g-3">
+    <div class="filter-card no-print">
+        <h5 class="mb-3"><i class="bi bi-funnel-fill"></i> Filter by Date Range</h5>
+        
+        <!-- Quick Filters -->
+        <div class="quick-filters">
+            <button class="quick-filter-btn" onclick="setDateRange('today')">Today</button>
+            <button class="quick-filter-btn" onclick="setDateRange('week')">This Week</button>
+            <button class="quick-filter-btn" onclick="setDateRange('month')">This Month</button>
+            <button class="quick-filter-btn" onclick="setDateRange('year')">This Year</button>
+            <button class="quick-filter-btn" onclick="setDateRange('all')">All Time</button>
+        </div>
+
+        <form method="get" class="filter-form">
+            <div class="row g-3">
                 <div class="col-md-4">
-                    <label for="start_date" class="form-label">Start Date</label>
+                    <label for="start_date" class="form-label">
+                        <i class="bi bi-calendar-event"></i> Start Date
+                    </label>
                     <input type="date" class="form-control" id="start_date" name="start_date" 
                            value="{{ start_date }}" required>
                 </div>
                 <div class="col-md-4">
-                    <label for="end_date" class="form-label">End Date</label>
+                    <label for="end_date" class="form-label">
+                        <i class="bi bi-calendar-check"></i> End Date
+                    </label>
                     <input type="date" class="form-control" id="end_date" name="end_date" 
                            value="{{ end_date }}" required>
                 </div>
                 <div class="col-md-4 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="bi bi-calendar-check"></i> Generate Report
+                    <button type="submit" class="btn btn-generate w-100">
+                        <i class="bi bi-graph-up"></i> Generate Report
                     </button>
                 </div>
-            </form>
-        </div>
+            </div>
+        </form>
     </div>
 
-    <!-- Summary Cards -->
+    <!-- Summary Statistics -->
     <div class="row g-4 mb-4">
         <div class="col-md-6">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <h6 class="card-subtitle mb-2 opacity-75">Total Revenue</h6>
-                    <h2 class="card-title mb-0">NPR {{ total_revenue|floatformat:2 }}</h2>
-                    <p class="card-text mb-0">
-                        From {{ start_date|date:"M d, Y" }} to {{ end_date|date:"M d, Y" }}
-                    </p>
+            <div class="stat-card revenue">
+                <div class="stat-icon">
+                    <i class="bi bi-cash-stack"></i>
+                </div>
+                <div class="stat-label">Total Revenue</div>
+                <div class="stat-value">{{ total_revenue|format_currency }}</div>
+                <div class="stat-period">
+                    <i class="bi bi-calendar3"></i> 
+                    {{ start_date|date:"M d, Y" }} - {{ end_date|date:"M d, Y" }}
                 </div>
             </div>
         </div>
         <div class="col-md-6">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <h6 class="card-subtitle mb-2 opacity-75">Total Payments</h6>
-                    <h2 class="card-title mb-0">{{ payment_count }}</h2>
-                    <p class="card-text mb-0">Number of transactions</p>
+            <div class="stat-card payments">
+                <div class="stat-icon">
+                    <i class="bi bi-receipt"></i>
+                </div>
+                <div class="stat-label">Total Transactions</div>
+                <div class="stat-value">{{ payment_count|format_number }}</div>
+                <div class="stat-period">
+                    <i class="bi bi-check-circle"></i> Completed payments
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Revenue by Payment Mode -->
-    <div class="row mb-4">
+    <!-- Revenue Breakdown -->
+    <div class="row">
+        <!-- Revenue by Payment Mode -->
         <div class="col-lg-6 mb-4">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="bi bi-credit-card"></i> Revenue by Payment Mode</h5>
+            <div class="report-card">
+                <div class="report-card-header">
+                    <i class="bi bi-credit-card-fill"></i>
+                    Revenue by Payment Mode
                 </div>
-                <div class="card-body">
+                <div class="report-card-body">
                     {% if revenue_by_mode %}
                     <div class="table-responsive">
-                        <table class="table table-hover">
+                        <table class="table table-modern">
                             <thead>
                                 <tr>
-                                    <th>Payment Mode</th>
-                                    <th>Transactions</th>
-                                    <th class="text-end">Amount</th>
+                                    <th><i class="bi bi-wallet2"></i> Payment Mode</th>
+                                    <th><i class="bi bi-hash"></i> Count</th>
+                                    <th class="text-end"><i class="bi bi-currency-exchange"></i> Amount</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for item in revenue_by_mode %}
                                 <tr>
                                     <td>
-                                        {% if item.payment_mode == 'CASH' %}Cash
-                                        {% elif item.payment_mode == 'BANK_TRANSFER' %}Bank Transfer
-                                        {% elif item.payment_mode == 'ONLINE' %}Online Payment
-                                        {% elif item.payment_mode == 'CHEQUE' %}Cheque
-                                        {% else %}{{ item.payment_mode }}
-                                        {% endif %}
+                                        <span class="badge-payment-mode 
+                                            {% if item.payment_mode == 'CASH' %}bg-success
+                                            {% elif item.payment_mode == 'BANK_TRANSFER' %}bg-primary
+                                            {% elif item.payment_mode == 'ONLINE' %}bg-info
+                                            {% elif item.payment_mode == 'CHEQUE' %}bg-warning
+                                            {% else %}bg-secondary{% endif %}">
+                                            {% if item.payment_mode == 'CASH' %}
+                                                <i class="bi bi-cash"></i> Cash
+                                            {% elif item.payment_mode == 'BANK_TRANSFER' %}
+                                                <i class="bi bi-bank"></i> Bank Transfer
+                                            {% elif item.payment_mode == 'ONLINE' %}
+                                                <i class="bi bi-globe"></i> Online Payment
+                                            {% elif item.payment_mode == 'CHEQUE' %}
+                                                <i class="bi bi-file-earmark-text"></i> Cheque
+                                            {% else %}
+                                                {{ item.payment_mode }}
+                                            {% endif %}
+                                        </span>
                                     </td>
-                                    <td>{{ item.count }}</td>
-                                    <td class="text-end fw-bold text-success">NPR {{ item.total|floatformat:2 }}</td>
+                                    <td><strong>{{ item.count|format_number }}</strong></td>
+                                    <td class="text-end amount-highlight">{{ item.total|format_currency }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
-                            <tfoot class="table-active">
+                            <tfoot>
                                 <tr>
-                                    <th>Total:</th>
-                                    <th>{{ payment_count }}</th>
-                                    <th class="text-end text-success">NPR {{ total_revenue|floatformat:2 }}</th>
+                                    <th>TOTAL</th>
+                                    <th>{{ payment_count|format_number }}</th>
+                                    <th class="text-end amount-highlight">{{ total_revenue|format_currency }}</th>
                                 </tr>
                             </tfoot>
                         </table>
                     </div>
                     {% else %}
-                    <p class="text-muted mb-0">No data available.</p>
+                    <div class="empty-state">
+                        <i class="bi bi-inbox"></i>
+                        <p class="mb-0">No payment data available</p>
+                    </div>
                     {% endif %}
                 </div>
             </div>
@@ -110,72 +473,86 @@
 
         <!-- Revenue by Membership Type -->
         <div class="col-lg-6 mb-4">
-            <div class="card">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0"><i class="bi bi-card-checklist"></i> Revenue by Membership Type</h5>
+            <div class="report-card">
+                <div class="report-card-header success">
+                    <i class="bi bi-person-badge-fill"></i>
+                    Revenue by Membership Type
                 </div>
-                <div class="card-body">
+                <div class="report-card-body">
                     {% if revenue_by_type %}
                     <div class="table-responsive">
-                        <table class="table table-hover">
+                        <table class="table table-modern">
                             <thead>
                                 <tr>
-                                    <th>Membership Type</th>
-                                    <th>Transactions</th>
-                                    <th class="text-end">Amount</th>
+                                    <th><i class="bi bi-award"></i> Type</th>
+                                    <th><i class="bi bi-hash"></i> Count</th>
+                                    <th class="text-end"><i class="bi bi-currency-exchange"></i> Amount</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for item in revenue_by_type %}
                                 <tr>
                                     <td>
-                                        {% if item.membership_fee__membership_type == 'REGULAR' %}Regular
-                                        {% elif item.membership_fee__membership_type == 'LIFETIME' %}Lifetime Membership
-                                        {% else %}{{ item.membership_fee__membership_type }}
-                                        {% endif %}
+                                        <span class="badge-membership {% if item.membership_fee__membership_type == 'LIFETIME' %}bg-success{% else %}bg-primary{% endif %}">
+                                            {% if item.membership_fee__membership_type == 'REGULAR' %}
+                                                <i class="bi bi-arrow-repeat"></i> Regular
+                                            {% elif item.membership_fee__membership_type == 'LIFETIME' %}
+                                                <i class="bi bi-infinity"></i> Lifetime
+                                            {% else %}
+                                                {{ item.membership_fee__membership_type }}
+                                            {% endif %}
+                                        </span>
                                     </td>
-                                    <td>{{ item.count }}</td>
-                                    <td class="text-end fw-bold text-success">NPR {{ item.total|floatformat:2 }}</td>
+                                    <td><strong>{{ item.count|format_number }}</strong></td>
+                                    <td class="text-end amount-highlight">{{ item.total|format_currency }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
-                            <tfoot class="table-active">
+                            <tfoot>
                                 <tr>
-                                    <th>Total:</th>
-                                    <th>{{ payment_count }}</th>
-                                    <th class="text-end text-success">NPR {{ total_revenue|floatformat:2 }}</th>
+                                    <th>TOTAL</th>
+                                    <th>{{ payment_count|format_number }}</th>
+                                    <th class="text-end amount-highlight">{{ total_revenue|format_currency }}</th>
                                 </tr>
                             </tfoot>
                         </table>
                     </div>
                     {% else %}
-                    <p class="text-muted mb-0">No data available.</p>
+                    <div class="empty-state">
+                        <i class="bi bi-inbox"></i>
+                        <p class="mb-0">No membership data available</p>
+                    </div>
                     {% endif %}
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Daily Revenue Chart -->
+    <!-- Daily Revenue Breakdown -->
     {% if daily_revenue %}
-    <div class="card mb-4">
-        <div class="card-header bg-dark text-white">
-            <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Daily Revenue Breakdown</h5>
+    <div class="report-card mb-4">
+        <div class="report-card-header dark">
+            <i class="bi bi-bar-chart-fill"></i>
+            Daily Revenue Breakdown
         </div>
-        <div class="card-body">
+        <div class="report-card-body">
             <div class="table-responsive">
-                <table class="table table-striped">
+                <table class="table table-modern">
                     <thead>
                         <tr>
-                            <th>Date</th>
-                            <th class="text-end">Amount Collected</th>
+                            <th><i class="bi bi-calendar-day"></i> Date</th>
+                            <th class="text-end"><i class="bi bi-cash-stack"></i> Revenue</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for item in daily_revenue %}
                         <tr>
-                            <td>{{ item.day|date:"F d, Y (l)" }}</td>
-                            <td class="text-end fw-bold text-success">NPR {{ item.total|floatformat:2 }}</td>
+                            <td>
+                                <span class="date-badge">
+                                    {{ item.day|date:"D, M d, Y" }}
+                                </span>
+                            </td>
+                            <td class="text-end amount-highlight">{{ item.total|format_currency }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -186,14 +563,15 @@
     {% endif %}
 
     <!-- Detailed Transactions -->
-    <div class="card">
-        <div class="card-header bg-warning text-dark">
-            <h5 class="mb-0"><i class="bi bi-list-ul"></i> Detailed Transactions</h5>
+    <div class="report-card">
+        <div class="report-card-header warning">
+            <i class="bi bi-list-check"></i>
+            Detailed Transaction History
         </div>
-        <div class="card-body">
+        <div class="report-card-body">
             {% if payments %}
             <div class="table-responsive">
-                <table class="table table-hover table-sm">
+                <table class="table table-modern table-sm">
                     <thead>
                         <tr>
                             <th>Date</th>
@@ -208,24 +586,74 @@
                         {% for payment in payments %}
                         <tr>
                             <td>{{ payment.payment_date|date:"M d, Y" }}</td>
-                            <td>{{ payment.receipt_number }}</td>
-                            <td>{{ payment.member.name }}</td>
+                            <td><code>{{ payment.receipt_number }}</code></td>
                             <td>
-                                <span class="badge bg-{% if payment.membership_fee.membership_type == 'LIFETIME' %}success{% else %}info{% endif %} badge-sm">
+                                <i class="bi bi-person-fill text-muted"></i>
+                                <strong>{{ payment.member.name }}</strong>
+                            </td>
+                            <td>
+                                <span class="badge-membership {% if payment.membership_fee.membership_type == 'LIFETIME' %}bg-success{% else %}bg-primary{% endif %}">
                                     {{ payment.membership_fee.get_membership_type_display }}
                                 </span>
                             </td>
-                            <td>{{ payment.get_payment_mode_display }}</td>
-                            <td class="text-end fw-bold">NPR {{ payment.amount|floatformat:2 }}</td>
+                            <td>
+                                <small class="text-muted">{{ payment.get_payment_mode_display }}</small>
+                            </td>
+                            <td class="text-end amount-highlight">{{ payment.amount|format_currency }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
             {% else %}
-            <p class="text-muted text-center py-4">No transactions found for the selected period.</p>
+            <div class="empty-state">
+                <i class="bi bi-receipt"></i>
+                <p class="mb-0">No transactions found for the selected period</p>
+                <small class="text-muted">Try adjusting the date range</small>
+            </div>
             {% endif %}
         </div>
     </div>
 </div>
+
+<script>
+// Quick Date Range Filters
+function setDateRange(range) {
+    const today = new Date();
+    const startDate = document.getElementById('start_date');
+    const endDate = document.getElementById('end_date');
+    
+    // Format date as YYYY-MM-DD
+    const formatDate = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+    
+    endDate.value = formatDate(today);
+    
+    let start = new Date();
+    
+    switch(range) {
+        case 'today':
+            start = new Date();
+            break;
+        case 'week':
+            start.setDate(today.getDate() - 7);
+            break;
+        case 'month':
+            start.setMonth(today.getMonth() - 1);
+            break;
+        case 'year':
+            start.setFullYear(today.getFullYear() - 1);
+            break;
+        case 'all':
+            start = new Date(2020, 0, 1); // Jan 1, 2020
+            break;
+    }
+    
+    startDate.value = formatDate(start);
+}
+</script>
 {% endblock %}

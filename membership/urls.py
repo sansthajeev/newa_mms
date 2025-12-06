@@ -41,4 +41,7 @@ urlpatterns = [
     
     # Reports
     path('reports/revenue/', views.revenue_report, name='revenue_report'),
+    path('reports/renewal-required/', views.renewal_required_report, name='renewal_required_report'),
+    path('reports/membership-expiry/', views.membership_expiry_report, name='membership_expiry_report'),
+    path('reports/new-members/', views.new_members_report, name='new_members_report'),
 ]

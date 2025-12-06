@@ -77,17 +77,105 @@ def pending_approval(request):
 
 @login_required
 def home(request):
-    """Home page with dashboard statistics"""
+    """Enhanced dashboard with statistics, upcoming birthdays, and insights"""
+    
+    # Calculate statistics
+    total_members = Member.objects.filter(is_active=True).count()
+    regular_members = Member.objects.filter(
+        is_active=True, 
+        membership_type='REGULAR'
+    ).count()
+    lifetime_members = Member.objects.filter(
+        is_active=True, 
+        membership_type='LIFETIME'
+    ).count()
+    
+    total_revenue = Payment.objects.aggregate(
+        total=Sum('amount')
+    )['total'] or 0
+    
+    # Calculate percentages
+    if total_members > 0:
+        regular_percentage = round((regular_members / total_members * 100), 1)
+        lifetime_percentage = round((lifetime_members / total_members * 100), 1)
+    else:
+        regular_percentage = 0
+        lifetime_percentage = 0
+    
+    # Get upcoming birthdays (next 7 days)
+    today = timezone.now().date()
+    upcoming_birthdays = []
+    
+    # Get all members with birthdates
+    members = Member.objects.filter(
+        is_active=True,
+        date_of_birth__isnull=False
+    )
+    
+    for member in members:
+        # Calculate this year's birthday
+        try:
+            birthday_this_year = member.date_of_birth.replace(year=today.year)
+        except ValueError:
+            # Handle leap year babies (Feb 29)
+            birthday_this_year = member.date_of_birth.replace(year=today.year, day=28)
+        
+        # If birthday already passed this year, use next year
+        if birthday_this_year < today:
+            try:
+                birthday_this_year = member.date_of_birth.replace(year=today.year + 1)
+            except ValueError:
+                birthday_this_year = member.date_of_birth.replace(year=today.year + 1, day=28)
+        
+        # Calculate days until birthday
+        days_until = (birthday_this_year - today).days
+        
+        # Include if within next 7 days
+        if 0 <= days_until <= 7:
+            member.days_until_birthday = days_until
+            upcoming_birthdays.append(member)
+    
+    # Sort by days until birthday
+    upcoming_birthdays.sort(key=lambda x: x.days_until_birthday)
+    
+    # Get recent payments (last 5)
+    recent_payments = Payment.objects.select_related(
+        'member', 'membership_fee'
+    ).order_by('-payment_date')[:5]
+    
+    # Get memberships expiring in next 30 days
+    thirty_days_from_now = today + timedelta(days=30)
+    expiring_soon = Member.objects.filter(
+        is_active=True,
+        membership_type='REGULAR',
+        membership_valid_until__isnull=False,
+        membership_valid_until__lte=thirty_days_from_now,
+        membership_valid_until__gte=today
+    ).order_by('membership_valid_until')[:5]
+    
+    # Add days_remaining to each expiring member
+    for member in expiring_soon:
+        if member.membership_valid_until:
+            member.days_remaining = (member.membership_valid_until - today).days
+        else:
+            member.days_remaining = 0
+    
     context = {
-        'total_members': Member.objects.filter(is_active=True).count(),
-        'regular_members': Member.objects.filter(membership_type='REGULAR', is_active=True).count(),
-        'lifetime_members': Member.objects.filter(membership_type='LIFETIME', is_active=True).count(),
-        'total_revenue': Payment.objects.aggregate(total=Sum('amount'))['total'] or 0,
-        'recent_members': Member.objects.filter(is_active=True).order_by('-join_date')[:5],
-        'recent_payments': Payment.objects.order_by('-payment_date')[:10],
+        'stats': {
+            'total_members': total_members,
+            'active_members': total_members,
+            'regular_members': regular_members,
+            'lifetime_members': lifetime_members,
+            'total_revenue': total_revenue,
+            'regular_percentage': regular_percentage,
+            'lifetime_percentage': lifetime_percentage,
+        },
+        'upcoming_birthdays': upcoming_birthdays[:10],  # Show max 10
+        'recent_payments': recent_payments,
+        'expiring_soon': expiring_soon,
     }
+    
     return render(request, 'membership/home.html', context)
-
 
 @login_required
 def member_list(request):
@@ -526,3 +614,175 @@ def user_unapprove(request, pk):
         messages.info(request, f'User {user_profile.user.username} is already unapproved.')
     
     return redirect('membership:user_approval_list')
+
+
+
+from django.utils import timezone
+from datetime import timedelta
+from django.db.models import Q, F, ExpressionWrapper, fields
+
+@login_required
+def renewal_required_report(request):
+    """Members requiring renewal - expired or expiring soon"""
+    today = timezone.now().date()
+    thirty_days = today + timedelta(days=30)
+    
+    # Expired members
+    expired_members = Member.objects.filter(
+        membership_type='REGULAR',
+        is_active=True,
+        membership_valid_until__lt=today
+    )
+    
+    # Expiring soon (next 30 days)
+    expiring_soon = Member.objects.filter(
+        membership_type='REGULAR',
+        is_active=True,
+        membership_valid_until__gte=today,
+        membership_valid_until__lte=thirty_days
+    )
+    
+    context = {
+        'expired_members': expired_members,
+        'expiring_soon_members': expiring_soon,
+        'expired_count': expired_members.count(),
+        'expiring_soon_count': expiring_soon.count(),
+        'total_requiring_renewal': expired_members.count() + expiring_soon.count(),
+    }
+    
+    return render(request, 'membership/renewal_required_report.html', context)
+
+# 2. MEMBERSHIP EXPIRY REPORT - FIXED
+@login_required
+def membership_expiry_report(request):
+    """All memberships with expiry tracking"""
+    today = timezone.now().date()
+    
+    # Get filter parameters
+    status = request.GET.get('status', '')
+    membership_type_filter = request.GET.get('type', '')
+    
+    # Base queryset - only regular members have expiry
+    members = Member.objects.filter(
+        membership_type='REGULAR',
+        is_active=True
+    ).exclude(membership_valid_until__isnull=True)
+    
+    # Apply membership type filter
+    if membership_type_filter:
+        members = members.filter(membership_type=membership_type_filter)
+    
+    # Apply status filter
+    if status == 'expired':
+        members = members.filter(membership_valid_until__lt=today)
+    elif status == 'this_month':
+        end_of_month = today.replace(day=1) + timedelta(days=32)
+        end_of_month = end_of_month.replace(day=1) - timedelta(days=1)
+        members = members.filter(
+            membership_valid_until__gte=today,
+            membership_valid_until__lte=end_of_month
+        )
+    elif status == 'next_month':
+        next_month_start = (today.replace(day=1) + timedelta(days=32)).replace(day=1)
+        next_month_end = (next_month_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+        members = members.filter(
+            membership_valid_until__gte=next_month_start,
+            membership_valid_until__lte=next_month_end
+        )
+    elif status == 'later':
+        next_month_start = (today.replace(day=1) + timedelta(days=32)).replace(day=1)
+        next_month_end = (next_month_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+        members = members.filter(membership_valid_until__gt=next_month_end)
+    
+    # Convert to list and add calculated fields
+    members_list = list(members.order_by('membership_valid_until'))
+    
+    for member in members_list:
+        if member.membership_valid_until:
+            if member.membership_valid_until < today:
+                member.is_expired_custom = True
+                member.days_overdue_custom = (today - member.membership_valid_until).days
+            else:
+                member.is_expired_custom = False
+                member.days_until_expiry_custom = (member.membership_valid_until - today).days
+                # Calculate percentage for progress bar (0-100)
+                days_passed = 365 - member.days_until_expiry_custom
+                member.expiry_percentage = min(100, max(0, (days_passed / 365) * 100))
+    
+    # Calculate stats
+    all_regular = Member.objects.filter(membership_type='REGULAR', is_active=True)
+    end_of_month = today.replace(day=1) + timedelta(days=32)
+    end_of_month = end_of_month.replace(day=1) - timedelta(days=1)
+    next_month_start = (today.replace(day=1) + timedelta(days=32)).replace(day=1)
+    next_month_end = (next_month_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+    
+    context = {
+        'members': members_list,
+        'expired_count': all_regular.filter(membership_valid_until__lt=today).count(),
+        'this_month_count': all_regular.filter(
+            membership_valid_until__gte=today,
+            membership_valid_until__lte=end_of_month
+        ).count(),
+        'next_month_count': all_regular.filter(
+            membership_valid_until__gte=next_month_start,
+            membership_valid_until__lte=next_month_end
+        ).count(),
+        'later_count': all_regular.filter(membership_valid_until__gt=next_month_end).count(),
+        'status': status,
+        'membership_type': membership_type_filter,
+    }
+    
+    return render(request, 'membership/membership_expiry_report.html', context)
+
+# 3. NEW MEMBERS REPORT
+@login_required
+def new_members_report(request):
+    """Recent member registrations"""
+    # Get filter parameters
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    membership_type = request.GET.get('type', '')
+    
+    # Default to last 30 days
+    if not end_date:
+        end_date = timezone.now().date()
+    else:
+        end_date = timezone.datetime.strptime(end_date, '%Y-%m-%d').date()
+    
+    if not start_date:
+        start_date = end_date - timedelta(days=30)
+    else:
+        start_date = timezone.datetime.strptime(start_date, '%Y-%m-%d').date()
+    
+    # Get new members
+    members = Member.objects.filter(
+        join_date__gte=start_date,
+        join_date__lte=end_date
+    ).order_by('-join_date')
+    
+    # Apply type filter
+    if membership_type:
+        members = members.filter(membership_type=membership_type)
+    
+    # Add days since joining
+    today = timezone.now().date()
+    for member in members:
+        member.days_since_joining = (today - member.join_date).days
+    
+    # Calculate stats
+    this_month_start = today.replace(day=1)
+    
+    context = {
+        'members': members,
+        'total_new_members': members.count(),
+        'this_month_count': Member.objects.filter(
+            join_date__gte=this_month_start
+        ).count(),
+        'regular_count': members.filter(membership_type='REGULAR').count(),
+        'lifetime_count': members.filter(membership_type='LIFETIME').count(),
+        'start_date': start_date.strftime('%Y-%m-%d'),
+        'end_date': end_date.strftime('%Y-%m-%d'),
+        'membership_type': membership_type,
+    }
+    
+    return render(request, 'membership/new_members_report.html', context)

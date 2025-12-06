@@ -60,3 +60,61 @@ def absolute_value(value):
         return abs(int(value))
     except (ValueError, TypeError):
         return value
+
+
+@register.filter(name='format_number')
+def format_number(value):
+    """
+    Format number with commas as thousands separator
+    
+    Usage in templates:
+        {{ 1000000|format_number }}  → 1,000,000
+        {{ 5000.50|format_number }}  → 5,000.50
+    """
+    try:
+        # Convert to float first to handle both int and float
+        num = float(value)
+        # Format with commas
+        if num == int(num):
+            # If it's a whole number, show no decimals
+            return "{:,}".format(int(num))
+        else:
+            # If it has decimals, show 2 decimal places
+            return "{:,.2f}".format(num)
+    except (ValueError, TypeError):
+        return value
+
+
+@register.filter(name='format_currency')
+def format_currency(value):
+    """
+    Format currency with NPR prefix and commas
+    
+    Usage in templates:
+        {{ 1000000|format_currency }}  → NPR 1,000,000
+        {{ 5000.50|format_currency }}  → NPR 5,000.50
+    """
+    try:
+        num = float(value)
+        if num == int(num):
+            return "NPR {:,}".format(int(num))
+        else:
+            return "NPR {:,.2f}".format(num)
+    except (ValueError, TypeError):
+        return value
+
+
+@register.filter(name='format_amount')
+def format_amount(value):
+    """
+    Format amount with 2 decimal places and commas
+    
+    Usage in templates:
+        {{ 1000.5|format_amount }}  → 1,000.50
+        {{ 1000|format_amount }}  → 1,000.00
+    """
+    try:
+        num = float(value)
+        return "{:,.2f}".format(num)
+    except (ValueError, TypeError):
+        return value

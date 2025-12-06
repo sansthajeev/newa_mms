@@ -63,7 +63,7 @@ class MemberAdmin(admin.ModelAdmin):
     list_display = [
         'membership_number',
         'name',
-        'phone_number',
+        'phone',
         'email',
         'membership_type',
         'is_active',
@@ -79,29 +79,35 @@ class MemberAdmin(admin.ModelAdmin):
     search_fields = [
         'name',
         'membership_number',
-        'phone_number',
+        'phone',
         'email',
         'citizenship_number',
         'father_name',
-        'mother_name'
+        'grandfather_name'
     ]
     readonly_fields = ['created_at', 'updated_at', 'total_paid_display']
     
     fieldsets = (
         ('Primary Information', {
             'fields': (
+                'photograph',
                 'name',
-                'phone_number',
+                'date_of_birth',
+                'gender',
+                'phone',
                 'email',
-                'permanent_address',
-                'current_address'
+                'address'
             )
         }),
-        ('Secondary Information', {
+        ('Family Information', {
             'fields': (
                 'father_name',
-                'mother_name',
-                'spouse_name',
+                'grandfather_name',
+                'spouse_name'
+            )
+        }),
+        ('Citizenship Information', {
+            'fields': (
                 'citizenship_number',
                 'citizenship_issue_date',
                 'citizenship_issue_district'
@@ -111,8 +117,11 @@ class MemberAdmin(admin.ModelAdmin):
             'fields': (
                 'membership_type',
                 'membership_number',
+                'payment_frequency',
                 'join_date',
                 'is_active',
+                'last_payment_date',
+                'membership_valid_until',
                 'total_paid_display'
             )
         }),
@@ -177,7 +186,7 @@ class MembershipFeeAdmin(admin.ModelAdmin):
         ('Fee Structure', {
             'fields': (
                 'membership_type',
-                'payment_mode',
+                'payment_frequency',
                 'amount',
                 'description',
                 'is_active'
