@@ -637,12 +637,12 @@
                                 <label class="form-label">Gender</label>
                                 {{ child_form.gender }}
                             </div>
-                            <div class="col-md-2 mb-3 d-flex align-items-end">
+                            {% comment %} <div class="col-md-2 mb-3 d-flex align-items-end">
                                 <div class="form-check">
                                     {{ child_form.DELETE }}
                                     <label class="form-check-label ms-1 small">Delete</label>
                                 </div>
-                            </div>
+                            </div> {% endcomment %}
                         </div>
                         {{ child_form.id }}
                     </div>
@@ -725,12 +725,12 @@
                             </div>
                         </div>
 
-                        <div class="date-display-box">
+                        {% comment %} <div class="date-display-box">
                             <div class="date-display-label">Selected Date</div>
                             <div class="date-display-value" id="join_display">
                                 <i class="bi bi-calendar-check"></i> No date selected
                             </div>
-                        </div>
+                        </div> {% endcomment %}
                     </div>
                 </div>
             </div>
