@@ -89,6 +89,10 @@ def home(request):
         is_active=True, 
         membership_type='LIFETIME'
     ).count()
+    honarary_members = Member.objects.filter(
+        is_active=True, 
+        membership_type='HONARARY'
+    ).count()
     
     total_revenue = Payment.objects.aggregate(
         total=Sum('amount')
@@ -98,6 +102,7 @@ def home(request):
     if total_members > 0:
         regular_percentage = round((regular_members / total_members * 100), 1)
         lifetime_percentage = round((lifetime_members / total_members * 100), 1)
+        honarary_percentage = round((honarary_members / total_members * 100), 1)
     else:
         regular_percentage = 0
         lifetime_percentage = 0
@@ -166,9 +171,11 @@ def home(request):
             'active_members': total_members,
             'regular_members': regular_members,
             'lifetime_members': lifetime_members,
+            'honarary_members': honarary_members,
             'total_revenue': total_revenue,
             'regular_percentage': regular_percentage,
             'lifetime_percentage': lifetime_percentage,
+            'honarary_percentage': honarary_percentage,
         },
         'upcoming_birthdays': upcoming_birthdays[:10],  # Show max 10
         'recent_payments': recent_payments,

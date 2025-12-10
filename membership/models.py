@@ -130,6 +130,7 @@ class Member(models.Model):
     MEMBERSHIP_CHOICES = [
         ('REGULAR', 'Regular'),
         ('LIFETIME', 'Lifetime Membership'),
+        ('HONARARY', 'Honarary Membership'),
     ]
     membership_type = models.CharField(
         max_length=20,
@@ -149,6 +150,8 @@ class Member(models.Model):
     PAYMENT_FREQUENCY_CHOICES = [
         ('ANNUAL', 'Annual'),
         ('MONTHLY', 'Monthly'),
+        ('ONE-TIME', 'Once for a Lifetime'),
+        ('HONARARY', 'Given on honour for a member'),
     ]
     payment_frequency = models.CharField(
         max_length=20,
@@ -371,12 +374,15 @@ class MembershipFee(models.Model):
         choices=[
             ('REGULAR', 'Regular'),
             ('LIFETIME', 'Lifetime Membership'),
+            ('HONARARY', 'Honarary Membership'),
         ],
         verbose_name="Membership Type"
     )
     PAYMENT_FREQUENCY_CHOICES = [
         ('ANNUAL', 'Annual'),
         ('MONTHLY', 'Monthly'),
+        ('ONE-TIME', 'Once for a Lifetime'),
+        ('HONARARY', 'Given on honour for a member'),
     ]
     payment_frequency = models.CharField(
         max_length=20,
@@ -434,6 +440,7 @@ class Payment(models.Model):
         ('BANK_TRANSFER', 'Bank Transfer'),
         ('ONLINE', 'Online Payment'),
         ('CHEQUE', 'Cheque'),
+        ('HONARARY', 'No Payment Required'),
     ]
     payment_mode = models.CharField(
         max_length=20,
@@ -506,7 +513,7 @@ class Payment(models.Model):
         member.last_payment_date = self.payment_date
         
         # Calculate membership validity
-        if member.membership_type == 'LIFETIME':
+        if member.membership_type == 'LIFETIME' or 'HONARARY':
             # Lifetime members never expire
             member.membership_valid_until = None
         else:

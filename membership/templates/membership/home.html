@@ -8,23 +8,26 @@
     <!-- Page Header -->
     <div class="row mb-4">
         <div class="col-12">
-            <h1 class="display-6 fw-bold">
+            <h1 class="display-6 fw-bold animate-fade-in">
                 <i class="bi bi-speedometer2 text-primary"></i> Dashboard
             </h1>
-            <p class="text-muted">Welcome back, {{ user.first_name|default:user.username }}! Here's your membership overview.</p>
+            <p class="text-muted animate-fade-in-delay">
+                Welcome back, {{ user.first_name|default:user.username }}! Here's your membership overview.
+            </p>
         </div>
     </div>
 
     <!-- Statistics Cards -->
     <div class="row g-3 mb-4">
-        <div class="col-xl-3 col-md-6">
-            <div class="card stat-card members h-100">
+        <!-- Total Members Card -->
+        <div class="col-xl-2 col-md-6">
+            <div class="card stat-card members h-100 hover-lift">
                 <div class="card-body d-flex align-items-center">
                     <div class="stat-icon me-3">
                         <i class="bi bi-people-fill"></i>
                     </div>
                     <div class="flex-grow-1">
-                        <h6 class="text-muted mb-1">Total Members</h6>
+                        <h6 class="text-muted mb-1 small">Total Members</h6>
                         <h2 class="mb-0 fw-bold">{{ stats.total_members|format_number }}</h2>
                         <small class="text-success">
                             <i class="bi bi-arrow-up"></i> {{ stats.active_members|format_number }} Active
@@ -34,14 +37,15 @@
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6">
-            <div class="card stat-card revenue h-100">
+        <!-- Total Revenue Card -->
+        <div class="col-xl-2 col-md-6">
+            <div class="card stat-card revenue h-100 hover-lift">
                 <div class="card-body d-flex align-items-center">
                     <div class="stat-icon me-3">
                         <i class="bi bi-cash-stack"></i>
                     </div>
                     <div class="flex-grow-1">
-                        <h6 class="text-muted mb-1">Total Revenue</h6>
+                        <h6 class="text-muted mb-1 small">Total Revenue</h6>
                         <h2 class="mb-0 fw-bold">{{ stats.total_revenue|format_currency }}</h2>
                         <small class="text-muted">All time</small>
                     </div>
@@ -49,14 +53,15 @@
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6">
-            <div class="card stat-card regular h-100">
+        <!-- Regular Members Card -->
+        <div class="col-xl-2 col-md-6">
+            <div class="card stat-card regular h-100 hover-lift">
                 <div class="card-body d-flex align-items-center">
                     <div class="stat-icon me-3">
                         <i class="bi bi-person-badge"></i>
                     </div>
                     <div class="flex-grow-1">
-                        <h6 class="text-muted mb-1">Regular Members</h6>
+                        <h6 class="text-muted mb-1 small">Regular Members</h6>
                         <h2 class="mb-0 fw-bold">{{ stats.regular_members|format_number }}</h2>
                         <small class="text-muted">Annual/Monthly</small>
                     </div>
@@ -64,55 +69,76 @@
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6">
-            <div class="card stat-card lifetime h-100">
+        <!-- Lifetime Members Card -->
+        <div class="col-xl-2 col-md-6">
+            <div class="card stat-card lifetime h-100 hover-lift">
                 <div class="card-body d-flex align-items-center">
                     <div class="stat-icon me-3">
                         <i class="bi bi-infinity"></i>
                     </div>
                     <div class="flex-grow-1">
-                        <h6 class="text-muted mb-1">Lifetime Members</h6>
+                        <h6 class="text-muted mb-1 small">Lifetime Members</h6>
                         <h2 class="mb-0 fw-bold">{{ stats.lifetime_members|format_number }}</h2>
                         <small class="text-muted">Permanent</small>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Honorary Members Card -->
+        <div class="col-xl-2 col-md-6">
+            <div class="card stat-card lifetime h-100 hover-lift">
+                <div class="card-body d-flex align-items-center">
+                    <div class="stat-icon me-3">
+                        <i class="bi bi-infinity"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="text-muted mb-1 small">Honorary Members</h6>
+                        <h2 class="mb-0 fw-bold">{{ stats.honarary_members|format_number }}</h2>
+                        <small class="text-muted">Given on Honor</small>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
+    <!-- Main Widgets Section -->
     <div class="row g-4">
         <!-- Upcoming Birthdays Widget -->
         <div class="col-lg-6">
-            <div class="card h-100">
-                <div class="card-header d-flex align-items-center justify-content-between">
+            <div class="card h-100 shadow-sm hover-shadow">
+                <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between">
                     <h5 class="mb-0">
-                        <i class="bi bi-cake2"></i> Upcoming Birthdays
+                        <i class="bi bi-cake2 text-primary"></i> Upcoming Birthdays
                     </h5>
-                    <span class="badge bg-light text-dark">This Week</span>
+                    <span class="badge bg-light text-dark border">This Week</span>
                 </div>
                 <div class="card-body">
                     {% if upcoming_birthdays %}
                         <div class="list-group list-group-flush">
                             {% for member in upcoming_birthdays %}
-                            <div class="list-group-item px-0 border-0 border-bottom">
+                            <div class="list-group-item px-0 border-0 border-bottom hover-bg-light transition-all">
                                 <div class="d-flex align-items-center">
+                                    <!-- Member Photo -->
                                     <div class="flex-shrink-0">
                                         {% if member.photograph %}
                                             <img src="{{ member.photograph.url }}" 
-                                                 class="rounded-circle" 
+                                                 class="rounded-circle shadow-sm" 
                                                  style="width: 50px; height: 50px; object-fit: cover;"
                                                  alt="{{ member.name }}">
                                         {% else %}
-                                            <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white" 
+                                            <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white shadow-sm" 
                                                  style="width: 50px; height: 50px;">
                                                 <i class="bi bi-person-fill fs-4"></i>
                                             </div>
                                         {% endif %}
                                     </div>
+
+                                    <!-- Member Info -->
                                     <div class="flex-grow-1 ms-3">
                                         <h6 class="mb-1">
                                             <a href="{% url 'membership:member_detail' member.pk %}" 
-                                               class="text-decoration-none text-dark">
+                                               class="text-decoration-none text-dark hover-primary">
                                                 {{ member.name }}
                                             </a>
                                         </h6>
@@ -126,15 +152,17 @@
                                             {% endif %}
                                         </div>
                                     </div>
+
+                                    <!-- Days Badge -->
                                     <div class="flex-shrink-0">
                                         {% if member.days_until_birthday == 0 %}
-                                            <span class="badge bg-warning text-dark">
+                                            <span class="badge bg-warning text-dark shadow-sm pulse">
                                                 <i class="bi bi-gift"></i> Today!
                                             </span>
                                         {% elif member.days_until_birthday == 1 %}
-                                            <span class="badge bg-info">Tomorrow</span>
+                                            <span class="badge bg-info shadow-sm">Tomorrow</span>
                                         {% else %}
-                                            <span class="badge bg-secondary">
+                                            <span class="badge bg-secondary shadow-sm">
                                                 {{ member.days_until_birthday }} days
                                             </span>
                                         {% endif %}
@@ -144,15 +172,15 @@
                             {% endfor %}
                         </div>
                     {% else %}
-                        <div class="text-center py-5">
-                            <i class="bi bi-cake2 text-muted" style="font-size: 3rem;"></i>
+                        <div class="text-center py-5 empty-state">
+                            <i class="bi bi-cake2 text-muted" style="font-size: 3rem; opacity: 0.5;"></i>
                             <p class="text-muted mt-3 mb-0">No upcoming birthdays this week</p>
                         </div>
                     {% endif %}
                 </div>
                 {% if upcoming_birthdays %}
-                <div class="card-footer bg-light">
-                    <a href="#" class="text-decoration-none small" onclick="alert('Full birthday calendar coming soon!')">
+                <div class="card-footer bg-light border-top">
+                    <a href="#" class="text-decoration-none small hover-primary" onclick="alert('Full birthday calendar coming soon!')">
                         <i class="bi bi-calendar3"></i> View All Birthdays
                     </a>
                 </div>
@@ -160,14 +188,14 @@
             </div>
         </div>
 
-        <!-- Recent Payments -->
+        <!-- Recent Payments Widget -->
         <div class="col-lg-6">
-            <div class="card h-100">
-                <div class="card-header d-flex align-items-center justify-content-between">
+            <div class="card h-100 shadow-sm hover-shadow">
+                <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between">
                     <h5 class="mb-0">
-                        <i class="bi bi-credit-card"></i> Recent Payments
+                        <i class="bi bi-credit-card text-success"></i> Recent Payments
                     </h5>
-                    <a href="{% url 'membership:payment_list' %}" class="btn btn-sm btn-outline-light">
+                    <a href="{% url 'membership:payment_list' %}" class="btn btn-sm btn-outline-light hover-outline-primary">
                         View All
                     </a>
                 </div>
@@ -175,12 +203,13 @@
                     {% if recent_payments %}
                         <div class="list-group list-group-flush">
                             {% for payment in recent_payments %}
-                            <div class="list-group-item px-0 border-0 border-bottom">
+                            <div class="list-group-item px-0 border-0 border-bottom hover-bg-light transition-all">
                                 <div class="d-flex justify-content-between align-items-start">
+                                    <!-- Payment Info -->
                                     <div class="flex-grow-1">
                                         <h6 class="mb-1">
                                             <a href="{% url 'membership:member_detail' payment.member.pk %}" 
-                                               class="text-decoration-none text-dark">
+                                               class="text-decoration-none text-dark hover-primary">
                                                 {{ payment.member.name }}
                                             </a>
                                         </h6>
@@ -193,8 +222,10 @@
                                             </span>
                                         </div>
                                     </div>
+
+                                    <!-- Payment Amount -->
                                     <div class="text-end">
-                                        <div class="fw-bold text-success">
+                                        <div class="fw-bold text-success fs-5">
                                             {{ payment.amount|format_currency }}
                                         </div>
                                         <div class="small text-muted">
@@ -206,8 +237,8 @@
                             {% endfor %}
                         </div>
                     {% else %}
-                        <div class="text-center py-5">
-                            <i class="bi bi-credit-card text-muted" style="font-size: 3rem;"></i>
+                        <div class="text-center py-5 empty-state">
+                            <i class="bi bi-credit-card text-muted" style="font-size: 3rem; opacity: 0.5;"></i>
                             <p class="text-muted mt-3 mb-0">No recent payments</p>
                         </div>
                     {% endif %}
@@ -216,33 +247,35 @@
         </div>
     </div>
 
-    <!-- Membership Status Overview -->
+    <!-- Bottom Section -->
     <div class="row g-4 mt-2">
+        <!-- Expiring Soon Card -->
         <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header">
+            <div class="card shadow-sm hover-shadow">
+                <div class="card-header bg-white border-bottom">
                     <h5 class="mb-0">
-                        <i class="bi bi-clock-history"></i> Expiring Soon
+                        <i class="bi bi-clock-history text-warning"></i> Expiring Soon
                     </h5>
                 </div>
                 <div class="card-body">
                     {% if expiring_soon %}
                         <div class="list-group list-group-flush">
                             {% for member in expiring_soon %}
-                            <div class="list-group-item px-0">
+                            <div class="list-group-item px-0 hover-bg-light transition-all">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
                                         <h6 class="mb-1">
                                             <a href="{% url 'membership:member_detail' member.pk %}" 
-                                               class="text-decoration-none">
+                                               class="text-decoration-none hover-primary">
                                                 {{ member.name }}
                                             </a>
                                         </h6>
                                         <small class="text-muted">
+                                            <i class="bi bi-calendar-x"></i>
                                             Expires: {{ member.membership_valid_until|date:"M d, Y" }}
                                         </small>
                                     </div>
-                                    <span class="badge bg-warning text-dark">
+                                    <span class="badge bg-warning text-dark shadow-sm">
                                         {{ member.days_remaining }} days
                                     </span>
                                 </div>
@@ -250,15 +283,15 @@
                             {% endfor %}
                         </div>
                     {% else %}
-                        <div class="text-center py-4">
+                        <div class="text-center py-4 empty-state">
                             <i class="bi bi-check-circle text-success" style="font-size: 2.5rem;"></i>
                             <p class="text-muted mt-2 mb-0">All memberships valid</p>
                         </div>
                     {% endif %}
                 </div>
                 {% if expiring_soon %}
-                <div class="card-footer bg-light">
-                    <a href="#" class="text-decoration-none small" onclick="alert('Renewal report coming soon!')">
+                <div class="card-footer bg-light border-top">
+                    <a href="#" class="text-decoration-none small hover-primary" onclick="alert('Renewal report coming soon!')">
                         <i class="bi bi-arrow-repeat"></i> View Renewal Report
                     </a>
                 </div>
@@ -266,26 +299,26 @@
             </div>
         </div>
 
-        <!-- Quick Actions -->
+        <!-- Quick Actions Card -->
         <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header">
+            <div class="card shadow-sm hover-shadow">
+                <div class="card-header bg-white border-bottom">
                     <h5 class="mb-0">
-                        <i class="bi bi-lightning-fill"></i> Quick Actions
+                        <i class="bi bi-lightning-fill text-warning"></i> Quick Actions
                     </h5>
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <a href="{% url 'membership:member_add' %}" class="btn btn-primary">
+                        <a href="{% url 'membership:member_add' %}" class="btn btn-primary hover-scale">
                             <i class="bi bi-person-plus"></i> Add New Member
                         </a>
-                        <a href="{% url 'membership:payment_add' %}" class="btn btn-success">
+                        <a href="{% url 'membership:payment_add' %}" class="btn btn-success hover-scale">
                             <i class="bi bi-cash-coin"></i> Record Payment
                         </a>
-                        <a href="{% url 'membership:member_list' %}" class="btn btn-outline-primary">
+                        <a href="{% url 'membership:member_list' %}" class="btn btn-outline-primary hover-scale">
                             <i class="bi bi-search"></i> Search Members
                         </a>
-                        <a href="{% url 'membership:revenue_report' %}" class="btn btn-outline-secondary">
+                        <a href="{% url 'membership:revenue_report' %}" class="btn btn-outline-secondary hover-scale">
                             <i class="bi bi-graph-up"></i> View Reports
                         </a>
                     </div>
@@ -293,22 +326,23 @@
             </div>
         </div>
 
-        <!-- Membership Type Distribution -->
+        <!-- Membership Distribution Card -->
         <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header">
+            <div class="card shadow-sm hover-shadow">
+                <div class="card-header bg-white border-bottom">
                     <h5 class="mb-0">
-                        <i class="bi bi-pie-chart"></i> Membership Distribution
+                        <i class="bi bi-pie-chart text-info"></i> Membership Distribution
                     </h5>
                 </div>
                 <div class="card-body">
+                    <!-- Regular Members -->
                     <div class="mb-3">
-                        <div class="d-flex justify-content-between mb-1">
-                            <span class="text-muted">Regular Members</span>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted small">Regular Members</span>
                             <span class="fw-bold">{{ stats.regular_members }}</span>
                         </div>
-                        <div class="progress" style="height: 20px;">
-                            <div class="progress-bar bg-warning" 
+                        <div class="progress shadow-sm" style="height: 20px;">
+                            <div class="progress-bar bg-warning progress-animated" 
                                  role="progressbar" 
                                  style="width: {{ stats.regular_percentage }}%"
                                  aria-valuenow="{{ stats.regular_percentage }}" 
@@ -318,13 +352,15 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Lifetime Members -->
                     <div class="mb-3">
-                        <div class="d-flex justify-content-between mb-1">
-                            <span class="text-muted">Lifetime Members</span>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted small">Lifetime Members</span>
                             <span class="fw-bold">{{ stats.lifetime_members }}</span>
                         </div>
-                        <div class="progress" style="height: 20px;">
-                            <div class="progress-bar" 
+                        <div class="progress shadow-sm" style="height: 20px;">
+                            <div class="progress-bar progress-animated" 
                                  role="progressbar" 
                                  style="width: {{ stats.lifetime_percentage }}%; background-color: #8b5cf6;"
                                  aria-valuenow="{{ stats.lifetime_percentage }}" 
@@ -334,10 +370,31 @@
                             </div>
                         </div>
                     </div>
-                    <hr>
-                    <div class="d-flex justify-content-between">
-                        <span class="text-muted">Total Active</span>
-                        <span class="fw-bold text-success">{{ stats.active_members|format_number }}</span>
+
+                    <!-- Honorary Members -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted small">Honorary Members</span>
+                            <span class="fw-bold">{{ stats.honarary_members }}</span>
+                        </div>
+                        <div class="progress shadow-sm" style="height: 20px;">
+                            <div class="progress-bar progress-animated" 
+                                 role="progressbar" 
+                                 style="width: {{ stats.honarary_percentage }}%; background-color: #8b5cf6;"
+                                 aria-valuenow="{{ stats.honarary_percentage }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                                {{ stats.honarary_percentage }}%
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-3">
+
+                    <!-- Total Active -->
+                    <div class="d-flex justify-content-between align-items-center p-2 bg-light rounded">
+                        <span class="text-muted fw-medium">Total Active</span>
+                        <span class="fw-bold text-success fs-5">{{ stats.active_members|format_number }}</span>
                     </div>
                 </div>
             </div>
@@ -346,20 +403,226 @@
 </div>
 
 <style>
-.stat-card {
-    cursor: default;
-}
+    /* Animation Keyframes */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
 
-.stat-card .stat-icon {
-    flex-shrink: 0;
-}
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+    }
 
-.progress {
-    border-radius: 0.5rem;
-}
+    @keyframes progressLoad {
+        from {
+            width: 0;
+        }
+    }
 
-.list-group-item:last-child {
-    border-bottom: none !important;
-}
+    /* Base Animations */
+    .animate-fade-in {
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    .animate-fade-in-delay {
+        animation: fadeIn 0.6s ease-out 0.2s both;
+    }
+
+    .pulse {
+        animation: pulse 2s infinite;
+    }
+
+    /* Transition Utilities */
+    .transition-all {
+        transition: all 0.3s ease;
+    }
+
+    /* Card Enhancements */
+    .stat-card {
+        cursor: default;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .stat-card .stat-icon {
+        flex-shrink: 0;
+        font-size: 2rem;
+        opacity: 0.8;
+    }
+
+    /* Hover Effects */
+    .hover-lift {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .hover-lift:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12) !important;
+    }
+
+    .hover-shadow {
+        transition: box-shadow 0.3s ease;
+    }
+
+    .hover-shadow:hover {
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12) !important;
+    }
+
+    .hover-scale {
+        transition: transform 0.2s ease;
+    }
+
+    .hover-scale:hover {
+        transform: scale(1.02);
+    }
+
+    .hover-bg-light:hover {
+        background-color: #f8f9fa;
+    }
+
+    .hover-primary {
+        transition: color 0.2s ease;
+    }
+
+    .hover-primary:hover {
+        color: var(--bs-primary) !important;
+    }
+
+    .hover-outline-primary {
+        transition: all 0.2s ease;
+    }
+
+    .hover-outline-primary:hover {
+        border-color: var(--bs-primary) !important;
+        color: var(--bs-primary) !important;
+    }
+
+    /* Card Styling */
+    .card {
+        border: none;
+        border-radius: 12px;
+    }
+
+    .card-header {
+        border-radius: 12px 12px 0 0 !important;
+        padding: 1rem 1.25rem;
+    }
+
+    .card-footer {
+        border-radius: 0 0 12px 12px !important;
+        padding: 0.75rem 1.25rem;
+    }
+
+    .shadow-sm {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+    }
+
+    /* Progress Bar Enhancements */
+    .progress {
+        border-radius: 10px;
+        background-color: #e9ecef;
+    }
+
+    .progress-bar {
+        border-radius: 10px;
+        transition: width 1s ease;
+    }
+
+    .progress-animated {
+        animation: progressLoad 1.5s ease-out;
+    }
+
+    /* Badge Enhancements */
+    .badge {
+        padding: 0.5rem 0.75rem;
+        font-weight: 500;
+        border-radius: 8px;
+    }
+
+    /* List Group Enhancements */
+    .list-group-item {
+        border-left: none !important;
+        border-right: none !important;
+        padding: 1rem 0;
+    }
+
+    .list-group-item:first-child {
+        border-top: none !important;
+    }
+
+    .list-group-item:last-child {
+        border-bottom: none !important;
+    }
+
+    /* Empty State Styling */
+    .empty-state {
+        opacity: 0.8;
+    }
+
+    /* Button Enhancements */
+    .btn {
+        border-radius: 8px;
+        font-weight: 500;
+        padding: 0.6rem 1.2rem;
+        transition: all 0.2s ease;
+    }
+
+    .btn i {
+        margin-right: 0.5rem;
+    }
+
+    /* Image Enhancements */
+    img.rounded-circle {
+        border: 2px solid #fff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Responsive Font Sizes */
+    @media (max-width: 768px) {
+        .stat-card h2 {
+            font-size: 1.5rem;
+        }
+
+        .stat-card .stat-icon {
+            font-size: 1.5rem;
+        }
+    }
+
+    /* Smooth Scrolling */
+    html {
+        scroll-behavior: smooth;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+        width: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 5px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
 </style>
 {% endblock %}

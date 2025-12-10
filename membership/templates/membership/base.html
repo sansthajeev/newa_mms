@@ -30,13 +30,15 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background-color: var(--bg-light);
             color: var(--text-dark);
+            padding-top: 76px; /* Add padding to prevent content from hiding behind fixed navbar */
         }
         
-        /* Enhanced Navbar with Dual-tone */
+        /* Enhanced Navbar with Dual-tone - Fixed at top */
         .navbar {
             background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
             box-shadow: var(--shadow-md);
             padding: 0.75rem 0;
+            z-index: 1030; /* Ensure navbar stays on top */
         }
         
         .navbar-brand {
@@ -326,12 +328,19 @@
         @media print {
             .no-print { display: none !important; }
             .print-only { display: block !important; }
-            body { background: white; }
+            body { 
+                background: white;
+                padding-top: 0; /* Remove padding for print */
+            }
             .card { box-shadow: none; border: 1px solid #ddd; }
         }
         
         /* Responsive */
         @media (max-width: 768px) {
+            body {
+                padding-top: 66px; /* Adjust padding for mobile navbar */
+            }
+            
             .page-header {
                 padding: 1.5rem 0;
             }
@@ -344,8 +353,8 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark no-print">
+    <!-- Navigation - Fixed at Top -->
+    <nav class="navbar navbar-expand-lg navbar-dark no-print fixed-top">
         <div class="container-fluid">
             <a class="navbar-brand" href="{% url 'membership:home' %}">
                 <i class="bi bi-people-fill"></i>
