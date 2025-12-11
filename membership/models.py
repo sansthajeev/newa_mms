@@ -58,6 +58,8 @@ class Member(models.Model):
     phone = models.CharField(
         validators=[phone_regex],
         max_length=17,
+        blank=True,
+        unique=False,
         verbose_name="Phone Number"
     )
     email = models.EmailField(
