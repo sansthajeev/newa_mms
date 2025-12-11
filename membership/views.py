@@ -98,7 +98,7 @@ def home(request):
     ).count()
     honarary_members = Member.objects.filter(
         is_active=True, 
-        membership_type='HONARARY'
+        membership_type='HONORARY'
     ).count()
     
     total_revenue = Payment.objects.aggregate(
@@ -192,18 +192,20 @@ def home(request):
     
     return render(request, 'membership/home.html', context)
 
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+
 @login_required
 def member_list(request):
-    """List all members with search and filter"""
+    """List all members with search, filter, and pagination"""
     members = Member.objects.all()
     
-    # Search functionality
+    # Search
     search_query = request.GET.get('search', '')
     if search_query:
         members = members.filter(
             Q(name__icontains=search_query) |
             Q(membership_number__icontains=search_query) |
-            Q(phone_number__icontains=search_query) |
+            Q(phone__icontains=search_query) |
             Q(email__icontains=search_query)
         )
     
@@ -214,16 +216,33 @@ def member_list(request):
     
     # Filter by status
     status = request.GET.get('status', '')
-    if status:
-        is_active = status == 'active'
-        members = members.filter(is_active=is_active)
+    if status == 'active':
+        members = members.filter(is_active=True)
+    elif status == 'inactive':
+        members = members.filter(is_active=False)
+    
+    # Order by most recent
+    members = members.order_by('-join_date', '-id')
+    
+    # Pagination - 20 members per page
+    paginator = Paginator(members, 20)  # Change number as needed
+    page = request.GET.get('page', 1)
+    
+    try:
+        members_page = paginator.page(page)
+    except PageNotAnInteger:
+        members_page = paginator.page(1)
+    except EmptyPage:
+        members_page = paginator.page(paginator.num_pages)
     
     context = {
-        'members': members.order_by('-join_date'),
+        'members': members_page,
         'search_query': search_query,
         'membership_type': membership_type,
         'status': status,
+        'total_count': paginator.count,  # Total number of members
     }
+    
     return render(request, 'membership/member_list.html', context)
 
 
@@ -896,6 +915,7 @@ def bulk_upload_members(request):
             errors = []
             skipped_count = 0
             auto_generated = []
+            duplicate_phones = []  # Track phones that were auto-fixed
             
             for index, row in df.iterrows():
                 try:
@@ -908,20 +928,17 @@ def bulk_upload_members(request):
                     
                     name = str(row['name']).strip()
                     
-                    # Auto-generate phone if missing
+                    # Handle phone with duplicate detection
                     phone = None
                     if 'phone' in row and not pd.isna(row['phone']) and str(row['phone']).strip():
                         phone = str(row['phone']).strip()
-                        # Check if phone already exists
-                        if Member.objects.filter(phone=phone).exists():
-                            error_count += 1
-                            errors.append(f'Row {index + 2}: Phone {phone} already exists')
-                            continue
+                        
+
                     else:
-                        # Generate placeholder phone (TEMP + timestamp + row number)
+                        # No phone provided - generate placeholder
                         import time
                         phone = f"TEMP{int(time.time())}{index}"
-                        row_auto_gen.append('phone')
+                        row_auto_gen.append('phone (missing)')
                     
                     # Parse dates
                     date_of_birth = None
@@ -949,7 +966,7 @@ def bulk_upload_members(request):
                     membership_type = 'REGULAR'
                     if 'membership_type' in row and not pd.isna(row['membership_type']):
                         membership_type = str(row['membership_type']).upper().strip()
-                        if membership_type not in ['REGULAR', 'LIFETIME']:
+                        if membership_type not in ['REGULAR', 'LIFETIME', 'HONORARY']:
                             membership_type = 'REGULAR'
                             row_auto_gen.append('membership_type')
                     else:
@@ -1014,7 +1031,7 @@ def bulk_upload_members(request):
                         address = 'Address not provided'
                         row_auto_gen.append('address')
                     
-                    # Get optional fields - use None for unique fields if empty
+                    # Get optional fields
                     father_name = None
                     if 'father_name' in row and not pd.isna(row['father_name']) and str(row['father_name']).strip():
                         father_name = str(row['father_name']).strip()
@@ -1027,7 +1044,7 @@ def bulk_upload_members(request):
                     if 'spouse_name' in row and not pd.isna(row['spouse_name']) and str(row['spouse_name']).strip():
                         spouse_name = str(row['spouse_name']).strip()
                     
-                    # IMPORTANT: Use None instead of empty string for citizenship_number (unique field)
+                    # Citizenship number - use None for unique field
                     citizenship_number = None
                     if 'citizenship_number' in row and not pd.isna(row['citizenship_number']) and str(row['citizenship_number']).strip():
                         citizenship_number = str(row['citizenship_number']).strip()
@@ -1045,18 +1062,12 @@ def bulk_upload_members(request):
                         date_of_birth=date_of_birth,
                         gender=gender,
                         address=address,
-                        
-                        # Family information (use None for empty)
                         father_name=father_name,
                         grandfather_name=grandfather_name,
                         spouse_name=spouse_name,
-                        
-                        # Citizenship (use None for unique field)
                         citizenship_number=citizenship_number,
                         citizenship_issue_date=citizenship_issue_date,
                         citizenship_issue_district=citizenship_issue_district,
-                        
-                        # Membership
                         membership_type=membership_type,
                         payment_frequency=payment_frequency,
                         join_date=join_date,
@@ -1084,6 +1095,7 @@ def bulk_upload_members(request):
             if skipped_count > 0:
                 messages.info(request, f'ℹ️ Skipped {skipped_count} empty row(s).')
             
+
             if auto_generated:
                 auto_gen_summary = []
                 for item in auto_generated[:10]:
@@ -1094,11 +1106,11 @@ def bulk_upload_members(request):
                 if len(auto_generated) > 10:
                     auto_gen_message += f'<br>... and {len(auto_generated) - 10} more rows'
                 
-                messages.warning(
+                messages.info(
                     request,
-                    f'⚠️ Auto-generated placeholder data for {len(auto_generated)} member(s):<br>{auto_gen_message}<br><br>'
+                    f'ℹ️ Auto-generated placeholder data for {len(auto_generated)} member(s):<br>{auto_gen_message}<br><br>'
                     f'<strong>Please update these fields later:</strong><br>'
-                    f'- Phone numbers starting with "TEMP"<br>'
+                    f'- Phone numbers starting with "TEMP" or "DUP"<br>'
                     f'- Emails with "@placeholder.com"<br>'
                     f'- Addresses saying "Address not provided"'
                 )
@@ -1118,7 +1130,6 @@ def bulk_upload_members(request):
             return redirect('membership:bulk_upload_members')
     
     return render(request, 'membership/bulk_upload_members.html')
-
 
 @login_required
 @user_passes_test(is_admin)

@@ -1,24 +1,140 @@
 {% extends 'membership/base.html' %}
+{% load nepali_filters %}
 
 {% block title %}Members List - Newa Samparka Samuha{% endblock %}
+
+{% block extra_css %}
+<style>
+.pagination {
+    margin: 0;
+}
+
+.pagination .page-link {
+    color: #667eea;
+    border: 1px solid #e2e8f0;
+    padding: 0.5rem 0.75rem;
+    margin: 0 2px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.pagination .page-link:hover {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+    transform: translateY(-2px);
+}
+
+.pagination .page-item.active .page-link {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+    color: white;
+}
+
+.pagination .page-item.disabled .page-link {
+    background: #f8f9fa;
+    border-color: #e2e8f0;
+    color: #cbd5e0;
+}
+
+.results-info {
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.card-header-custom {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px 15px 0 0 !important;
+    padding: 1rem 1.5rem;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f8fafc;
+    transform: scale(1.01);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: all 0.2s ease;
+}
+
+/* Real-time search styling */
+.search-input-wrapper {
+    position: relative;
+}
+
+.search-spinner {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: none;
+}
+
+.search-spinner.show {
+    display: block;
+}
+
+.clear-search {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #94a3b8;
+    display: none;
+}
+
+.clear-search.show {
+    display: block;
+}
+
+.clear-search:hover {
+    color: #ef4444;
+}
+
+.badge-honorary {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="bi bi-people"></i> Members</h1>
-        <a href="{% url 'membership:member_add' %}" class="btn btn-primary">
-            <i class="bi bi-person-plus"></i> Add New Member
-        </a>
+        <div>
+            <h1><i class="bi bi-people-fill"></i> Members</h1>
+            <p class="text-muted mb-0">Total: {{ total_count|format_number }} members</p>
+        </div>
+        <div>
+            <a href="{% url 'membership:bulk_upload_members' %}" class="btn btn-outline-primary me-2">
+                <i class="bi bi-cloud-upload"></i> Bulk Upload
+            </a>
+            <a href="{% url 'membership:member_add' %}" class="btn btn-primary">
+                <i class="bi bi-person-plus"></i> Add New Member
+            </a>
+        </div>
     </div>
 
     <!-- Search and Filter -->
     <div class="card mb-4">
         <div class="card-body">
-            <form method="get" class="row g-3">
+            <form method="get" class="row g-3" id="filterForm">
                 <div class="col-md-4">
-                    <label for="search" class="form-label">Search</label>
-                    <input type="text" class="form-control" id="search" name="search" 
-                           value="{{ search_query }}" placeholder="Name, Number, Phone, Email">
+                    <label for="search" class="form-label">
+                        <i class="bi bi-search"></i> Real-Time Search
+                    </label>
+                    <div class="search-input-wrapper">
+                        <input type="text" class="form-control" id="search" name="search" 
+                               value="{{ search_query }}" 
+                               placeholder="Type to search: Name, Number, Phone, Email..."
+                               autocomplete="off">
+                        <div class="search-spinner" id="searchSpinner">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                <span class="visually-hidden">Searching...</span>
+                            </div>
+                        </div>
+                        <i class="bi bi-x-circle-fill clear-search" id="clearSearch"></i>
+                    </div>
+                    <small class="text-muted">Search updates automatically as you type</small>
                 </div>
                 <div class="col-md-3">
                     <label for="type" class="form-label">Membership Type</label>
@@ -26,6 +142,7 @@
                         <option value="">All Types</option>
                         <option value="REGULAR" {% if membership_type == 'REGULAR' %}selected{% endif %}>Regular</option>
                         <option value="LIFETIME" {% if membership_type == 'LIFETIME' %}selected{% endif %}>Lifetime</option>
+                        <option value="HONORARY" {% if membership_type == 'HONORARY' %}selected{% endif %}>Honorary</option>
                     </select>
                 </div>
                 <div class="col-md-3">
@@ -37,8 +154,8 @@
                     </select>
                 </div>
                 <div class="col-md-2 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="bi bi-search"></i> Search
+                    <button type="button" class="btn btn-secondary w-100" id="resetBtn">
+                        <i class="bi bi-arrow-clockwise"></i> Reset
                     </button>
                 </div>
             </form>
@@ -47,8 +164,15 @@
 
     <!-- Members Table -->
     <div class="card">
-        <div class="card-header">
-            <h5 class="mb-0">Members List ({{ members.count }})</h5>
+        <div class="card-header card-header-custom">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-ul"></i> Members List
+                </h5>
+                <span class="badge bg-white text-primary">
+                    Showing {{ members.start_index }} - {{ members.end_index }} of {{ total_count|format_number }}
+                </span>
+            </div>
         </div>
         <div class="card-body">
             {% if members %}
@@ -56,38 +180,52 @@
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th>Membership #</th>
-                            <th>Name</th>
-                            <th>Phone</th>
-                            <th>Email</th>
-                            <th>Type</th>
-                            <th>Join Date</th>
-                            <th>Status</th>
-                            <th>Total Paid</th>
-                            <th>Action</th>
+                            <th><i class="bi bi-hash"></i> Membership #</th>
+                            <th><i class="bi bi-person"></i> Name</th>
+                            <th><i class="bi bi-telephone"></i> Phone</th>
+                            <th><i class="bi bi-envelope"></i> Email</th>
+                            <th><i class="bi bi-award"></i> Type</th>
+                            <th><i class="bi bi-calendar"></i> Join Date</th>
+                            <th><i class="bi bi-check-circle"></i> Status</th>
+                            <th><i class="bi bi-cash"></i> Total Paid</th>
+                            <th><i class="bi bi-gear"></i> Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for member in members %}
                         <tr>
-                            <td>{{ member.membership_number }}</td>
-                            <td>{{ member.name }}</td>
-                            <td>{{ member.phone_number }}</td>
-                            <td>{{ member.email }}</td>
+                            <td><code>{{ member.membership_number }}</code></td>
+                            <td><strong>{{ member.name }}</strong></td>
+                            <td>{{ member.phone }}</td>
+                            <td>{{ member.email|default:"-" }}</td>
                             <td>
-                                <span class="badge bg-{% if member.membership_type == 'LIFETIME' %}success{% else %}info{% endif %}">
-                                    {{ member.get_membership_type_display }}
-                                </span>
+                                {% if member.membership_type == 'LIFETIME' %}
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-infinity"></i> {{ member.get_membership_type_display }}
+                                    </span>
+                                {% elif member.membership_type == 'HONORARY' %}
+                                    <span class="badge badge-honorary">
+                                        <i class="bi bi-star-fill"></i> {{ member.get_membership_type_display }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-info">
+                                        <i class="bi bi-arrow-repeat"></i> {{ member.get_membership_type_display }}
+                                    </span>
+                                {% endif %}
                             </td>
                             <td>{{ member.join_date|date:"M d, Y" }}</td>
                             <td>
                                 {% if member.is_active %}
-                                <span class="badge bg-success">Active</span>
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle"></i> Active
+                                </span>
                                 {% else %}
-                                <span class="badge bg-secondary">Inactive</span>
+                                <span class="badge bg-secondary">
+                                    <i class="bi bi-x-circle"></i> Inactive
+                                </span>
                                 {% endif %}
                             </td>
-                            <td class="text-success fw-bold">NPR {{ member.get_total_paid|floatformat:2 }}</td>
+                            <td class="text-success fw-bold">{{ member.get_total_paid|format_currency }}</td>
                             <td>
                                 <a href="{% url 'membership:member_detail' member.pk %}" class="btn btn-sm btn-outline-primary">
                                     <i class="bi bi-eye"></i> View
@@ -98,10 +236,186 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- Pagination -->
+            {% if members.has_other_pages %}
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <!-- Results Info -->
+                <div class="results-info">
+                    Showing <strong>{{ members.start_index }}</strong> to <strong>{{ members.end_index }}</strong> of <strong>{{ total_count|format_number }}</strong> members
+                </div>
+
+                <!-- Pagination Controls -->
+                <nav aria-label="Page navigation">
+                    <ul class="pagination mb-0">
+                        <!-- First Page -->
+                        {% if members.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if membership_type %}&type={{ membership_type }}{% endif %}{% if status %}&status={{ status }}{% endif %}">
+                                <i class="bi bi-chevron-double-left"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        <!-- Previous Page -->
+                        {% if members.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ members.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if membership_type %}&type={{ membership_type }}{% endif %}{% if status %}&status={{ status }}{% endif %}">
+                                <i class="bi bi-chevron-left"></i> Previous
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                <i class="bi bi-chevron-left"></i> Previous
+                            </span>
+                        </li>
+                        {% endif %}
+
+                        <!-- Page Numbers -->
+                        {% for num in members.paginator.page_range %}
+                            {% if members.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > members.number|add:'-3' and num < members.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if membership_type %}&type={{ membership_type }}{% endif %}{% if status %}&status={{ status }}{% endif %}">
+                                        {{ num }}
+                                    </a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        <!-- Next Page -->
+                        {% if members.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ members.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if membership_type %}&type={{ membership_type }}{% endif %}{% if status %}&status={{ status }}{% endif %}">
+                                Next <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                Next <i class="bi bi-chevron-right"></i>
+                            </span>
+                        </li>
+                        {% endif %}
+
+                        <!-- Last Page -->
+                        {% if members.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ members.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if membership_type %}&type={{ membership_type }}{% endif %}{% if status %}&status={{ status }}{% endif %}">
+                                <i class="bi bi-chevron-double-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+
             {% else %}
-            <p class="text-muted text-center py-4">No members found.</p>
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-inbox" style="font-size: 4rem;"></i>
+                <h4 class="mt-3">No members found</h4>
+                <p>Try adjusting your search or filters</p>
+                <a href="{% url 'membership:member_add' %}" class="btn btn-primary mt-2">
+                    <i class="bi bi-person-plus"></i> Add First Member
+                </a>
+            </div>
             {% endif %}
         </div>
     </div>
 </div>
+
+<script>
+// Real-time search functionality
+let searchTimeout;
+const searchInput = document.getElementById('search');
+const typeSelect = document.getElementById('type');
+const statusSelect = document.getElementById('status');
+const clearSearchBtn = document.getElementById('clearSearch');
+const searchSpinner = document.getElementById('searchSpinner');
+const resetBtn = document.getElementById('resetBtn');
+
+// Show/hide clear button
+searchInput.addEventListener('input', function() {
+    if (this.value.length > 0) {
+        clearSearchBtn.classList.add('show');
+    } else {
+        clearSearchBtn.classList.remove('show');
+    }
+});
+
+// Initial state
+if (searchInput.value.length > 0) {
+    clearSearchBtn.classList.add('show');
+}
+
+// Clear search
+clearSearchBtn.addEventListener('click', function() {
+    searchInput.value = '';
+    clearSearchBtn.classList.remove('show');
+    performSearch();
+});
+
+// Real-time search with debounce
+searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    searchSpinner.classList.add('show');
+    
+    searchTimeout = setTimeout(function() {
+        performSearch();
+    }, 500); // Wait 500ms after user stops typing
+});
+
+// Filter changes trigger immediate search
+typeSelect.addEventListener('change', performSearch);
+statusSelect.addEventListener('change', performSearch);
+
+// Reset all filters
+resetBtn.addEventListener('click', function() {
+    searchInput.value = '';
+    typeSelect.value = '';
+    statusSelect.value = '';
+    clearSearchBtn.classList.remove('show');
+    window.location.href = window.location.pathname;
+});
+
+function performSearch() {
+    const searchValue = searchInput.value;
+    const typeValue = typeSelect.value;
+    const statusValue = statusSelect.value;
+    
+    // Build URL with parameters
+    let url = window.location.pathname + '?';
+    const params = [];
+    
+    if (searchValue) params.push('search=' + encodeURIComponent(searchValue));
+    if (typeValue) params.push('type=' + typeValue);
+    if (statusValue) params.push('status=' + statusValue);
+    
+    url += params.join('&');
+    
+    // Redirect to URL (which will trigger page reload with new results)
+    window.location.href = url;
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + K to focus search
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        searchInput.focus();
+    }
+    
+    // Escape to clear search
+    if (e.key === 'Escape' && document.activeElement === searchInput) {
+        searchInput.value = '';
+        clearSearchBtn.classList.remove('show');
+        searchInput.blur();
+    }
+});
+</script>
 {% endblock %}

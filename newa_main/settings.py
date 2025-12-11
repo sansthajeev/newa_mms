@@ -83,20 +83,6 @@ WSGI_APPLICATION = 'newa_main.wsgi.application'
 # }
 
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'newa',
-#         'USER': 'newa_user',
-#         'PASSWORD': 'strongpassword',
-#         'HOST': 'localhost',           # cPanel MySQL server
-#         'PORT': '3306',
-#         'OPTIONS': {
-#             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-#         },
-#     }
-# }
-
 import os 
 
 DATABASES = {
