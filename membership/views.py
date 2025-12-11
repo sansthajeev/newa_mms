@@ -113,6 +113,7 @@ def home(request):
     else:
         regular_percentage = 0
         lifetime_percentage = 0
+        honarary_percentage = 0
     
     # Get upcoming birthdays (next 7 days)
     today = timezone.now().date()
