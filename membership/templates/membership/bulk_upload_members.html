@@ -1,0 +1,491 @@
+{% extends 'membership/base.html' %}
+{% load static %}
+
+{% block title %}Bulk Upload Members - Newa Samparka Samuha{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --gradient-success: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    --card-shadow: 0 10px 40px rgba(0,0,0,0.1);
+}
+
+.page-header {
+    background: var(--gradient-primary);
+    color: white;
+    padding: 2.5rem 0;
+    margin: -1.5rem -1.5rem 2rem -1.5rem;
+    border-radius: 0 0 25px 25px;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+}
+
+.upload-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 2rem;
+}
+
+.upload-zone {
+    border: 3px dashed #cbd5e0;
+    border-radius: 20px;
+    padding: 3rem 2rem;
+    text-align: center;
+    background: #f8fafc;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.upload-zone:hover {
+    border-color: #667eea;
+    background: #f0f4ff;
+}
+
+.upload-zone.dragover {
+    border-color: #667eea;
+    background: #e6edff;
+    transform: scale(1.02);
+}
+
+.upload-icon {
+    font-size: 4rem;
+    color: #667eea;
+    margin-bottom: 1rem;
+}
+
+.file-input {
+    display: none;
+}
+
+.btn-upload {
+    background: var(--gradient-primary);
+    color: white;
+    border: none;
+    padding: 0.875rem 2rem;
+    border-radius: 25px;
+    font-weight: 700;
+    transition: all 0.3s ease;
+}
+
+.btn-upload:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    color: white;
+}
+
+.btn-template {
+    background: var(--gradient-success);
+    color: white;
+    border: none;
+    padding: 0.875rem 2rem;
+    border-radius: 25px;
+    font-weight: 700;
+    transition: all 0.3s ease;
+}
+
+.btn-template:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(17, 153, 142, 0.3);
+    color: white;
+}
+
+.instruction-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 2rem;
+}
+
+.instruction-step {
+    background: #f8fafc;
+    border-left: 4px solid #667eea;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.instruction-step:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    background: var(--gradient-primary);
+    color: white;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    margin-right: 1rem;
+    font-size: 1.2rem;
+}
+
+.file-selected {
+    background: #f0fdf4;
+    border: 2px solid #10b981;
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+    display: none;
+}
+
+.file-selected.show {
+    display: block;
+}
+
+.feature-list {
+    list-style: none;
+    padding: 0;
+}
+
+.feature-list li {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.feature-list li:last-child {
+    border-bottom: none;
+}
+
+.feature-list i {
+    color: #10b981;
+    margin-right: 0.75rem;
+    font-size: 1.2rem;
+}
+
+.alert-info-custom {
+    background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
+    border: none;
+    border-radius: 15px;
+    padding: 1.5rem;
+}
+
+.progress-upload {
+    height: 30px;
+    border-radius: 15px;
+    display: none;
+    margin-top: 1rem;
+}
+
+.progress-upload.show {
+    display: block;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container-fluid">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="mb-2"><i class="bi bi-cloud-upload-fill"></i> Bulk Upload Members</h1>
+                    <p class="mb-0 opacity-90">Upload multiple members at once using Excel or CSV file</p>
+                </div>
+                <a href="{% url 'membership:member_list' %}" class="btn btn-light">
+                    <i class="bi bi-arrow-left"></i> Back to Members
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Upload Section -->
+        <div class="col-lg-6 mb-4">
+            <div class="upload-card">
+                <h4 class="mb-4">
+                    <i class="bi bi-upload"></i> Upload File
+                </h4>
+
+                <!-- Download Template Button -->
+                <div class="text-center mb-4">
+                    <a href="{% url 'membership:download_template' %}" class="btn btn-template btn-lg">
+                        <i class="bi bi-download"></i> Download Excel Template
+                    </a>
+                    <p class="text-muted small mt-2">Get the Excel template with sample data and instructions</p>
+                </div>
+
+                <hr>
+
+                <!-- Upload Form -->
+                <form method="post" enctype="multipart/form-data" id="uploadForm">
+                    {% csrf_token %}
+                    
+                    <!-- Drop Zone -->
+                    <div class="upload-zone" id="uploadZone">
+                        <div class="upload-icon">
+                            <i class="bi bi-cloud-arrow-up"></i>
+                        </div>
+                        <h5>Drag & Drop your file here</h5>
+                        <p class="text-muted mb-3">or</p>
+                        <label for="fileInput" class="btn btn-upload">
+                            <i class="bi bi-file-earmark-spreadsheet"></i> Choose File
+                        </label>
+                        <input type="file" 
+                               name="file" 
+                               id="fileInput" 
+                               class="file-input" 
+                               accept=".xlsx,.xls,.csv" 
+                               required>
+                        <p class="text-muted small mt-3">
+                            Supported formats: Excel (.xlsx, .xls) and CSV (.csv)
+                        </p>
+                    </div>
+
+                    <!-- File Selected Info -->
+                    <div class="file-selected" id="fileSelected">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <i class="bi bi-file-earmark-check text-success" style="font-size: 2rem;"></i>
+                                <strong class="ms-2" id="fileName"></strong>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearFile()">
+                                <i class="bi bi-x-circle"></i> Remove
+                            </button>
+                        </div>
+                        <small class="text-muted d-block mt-2" id="fileSize"></small>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="progress progress-upload" id="progressBar">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" 
+                             style="width: 0%">
+                            Uploading...
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-upload btn-lg" id="submitBtn" disabled>
+                            <i class="bi bi-cloud-upload"></i> Upload Members
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Features -->
+            <div class="instruction-card">
+                <h5 class="mb-3">
+                    <i class="bi bi-star-fill text-warning"></i> Features
+                </h5>
+                <ul class="feature-list">
+                    <li>
+                        <i class="bi bi-check-circle-fill"></i>
+                        <strong>Bulk Import:</strong> Upload hundreds of members at once
+                    </li>
+                    <li>
+                        <i class="bi bi-check-circle-fill"></i>
+                        <strong>Excel Support:</strong> Works with .xlsx, .xls formats
+                    </li>
+                    <li>
+                        <i class="bi bi-check-circle-fill"></i>
+                        <strong>CSV Support:</strong> Also accepts CSV files
+                    </li>
+                    <li>
+                        <i class="bi bi-check-circle-fill"></i>
+                        <strong>Data Validation:</strong> Automatic validation of all fields
+                    </li>
+                    <li>
+                        <i class="bi bi-check-circle-fill"></i>
+                        <strong>Error Reporting:</strong> Clear feedback on failed rows
+                    </li>
+                    <li>
+                        <i class="bi bi-check-circle-fill"></i>
+                        <strong>Sample Template:</strong> Download with example data
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Instructions Section -->
+        <div class="col-lg-6 mb-4">
+            <div class="instruction-card">
+                <h4 class="mb-4">
+                    <i class="bi bi-lightbulb-fill text-warning"></i> How to Use
+                </h4>
+
+                <div class="instruction-step">
+                    <div class="d-flex align-items-start">
+                        <span class="step-number">1</span>
+                        <div>
+                            <h6 class="mb-2">Download Template</h6>
+                            <p class="mb-0 text-muted">
+                                Click the "Download Excel Template" button to get the formatted Excel file with sample data and instructions.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="instruction-step">
+                    <div class="d-flex align-items-start">
+                        <span class="step-number">2</span>
+                        <div>
+                            <h6 class="mb-2">Fill in Your Data</h6>
+                            <p class="mb-0 text-muted">
+                                Open the template and replace the sample data with your member information. Required fields: <strong>name</strong>, <strong>phone</strong>, and <strong>membership_type</strong>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="instruction-step">
+                    <div class="d-flex align-items-start">
+                        <span class="step-number">3</span>
+                        <div>
+                            <h6 class="mb-2">Upload File</h6>
+                            <p class="mb-0 text-muted">
+                                Drag and drop your file into the upload zone or click "Choose File" to select it from your computer.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="instruction-step">
+                    <div class="d-flex align-items-start">
+                        <span class="step-number">4</span>
+                        <div>
+                            <h6 class="mb-2">Review Results</h6>
+                            <p class="mb-0 text-muted">
+                                After upload, you'll see a summary of successful uploads and any errors that need attention.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Important Notes -->
+            <div class="alert alert-info-custom">
+                <h6>
+                    <i class="bi bi-info-circle-fill"></i> Important Notes
+                </h6>
+                <ul class="mb-0">
+                    <li>Date format must be <code>YYYY-MM-DD</code> (e.g., 2024-12-06)</li>
+                    <li>Membership type must be either <code>REGULAR</code> or <code>LIFETIME</code></li>
+                    <li>Gender should be <code>M</code>, <code>F</code>, or <code>O</code></li>
+                    <li>Phone numbers are required and should be unique</li>
+                    <li>Empty rows will be skipped automatically</li>
+                    <li>The system will validate all data before importing</li>
+                </ul>
+            </div>
+
+            <!-- Required Fields -->
+            <div class="instruction-card">
+                <h5 class="mb-3">
+                    <i class="bi bi-asterisk text-danger"></i> Required Fields
+                </h5>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Field</th>
+                                <th>Description</th>
+                                <th>Example</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>name</code></td>
+                                <td>Full name</td>
+                                <td>John Doe</td>
+                            </tr>
+                            <tr>
+                                <td><code>phone</code></td>
+                                <td>Contact number</td>
+                                <td>9841234567</td>
+                            </tr>
+                            <tr>
+                                <td><code>membership_type</code></td>
+                                <td>Type of membership</td>
+                                <td>REGULAR or LIFETIME</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// File input handling
+const fileInput = document.getElementById('fileInput');
+const uploadZone = document.getElementById('uploadZone');
+const fileSelected = document.getElementById('fileSelected');
+const fileName = document.getElementById('fileName');
+const fileSize = document.getElementById('fileSize');
+const submitBtn = document.getElementById('submitBtn');
+const uploadForm = document.getElementById('uploadForm');
+const progressBar = document.getElementById('progressBar');
+
+// File input change
+fileInput.addEventListener('change', function(e) {
+    if (this.files.length > 0) {
+        displayFile(this.files[0]);
+    }
+});
+
+// Drag and drop
+uploadZone.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    this.classList.add('dragover');
+});
+
+uploadZone.addEventListener('dragleave', function() {
+    this.classList.remove('dragover');
+});
+
+uploadZone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    this.classList.remove('dragover');
+    
+    const file = e.dataTransfer.files[0];
+    if (file) {
+        fileInput.files = e.dataTransfer.files;
+        displayFile(file);
+    }
+});
+
+// Display selected file
+function displayFile(file) {
+    fileName.textContent = file.name;
+    fileSize.textContent = `Size: ${(file.size / 1024).toFixed(2)} KB`;
+    fileSelected.classList.add('show');
+    submitBtn.disabled = false;
+}
+
+// Clear file
+function clearFile() {
+    fileInput.value = '';
+    fileSelected.classList.remove('show');
+    submitBtn.disabled = true;
+}
+
+// Form submission with progress
+uploadForm.addEventListener('submit', function(e) {
+    // Show progress bar
+    progressBar.classList.add('show');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Uploading...';
+    
+    // Simulate progress (in real scenario, use AJAX for actual progress)
+    let progress = 0;
+    const progressInterval = setInterval(function() {
+        progress += 10;
+        progressBar.querySelector('.progress-bar').style.width = progress + '%';
+        
+        if (progress >= 90) {
+            clearInterval(progressInterval);
+        }
+    }, 200);
+});
+</script>
+{% endblock %}

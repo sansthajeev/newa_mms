@@ -12,6 +12,13 @@ from .forms import (
 )
 from datetime import datetime, timedelta
 
+import pandas as pd
+import openpyxl
+from io import BytesIO
+from django.core.exceptions import ValidationError
+from django.db import transaction
+
+
 
 # Helper function to check if user is admin/staff
 def is_admin(user):
@@ -856,3 +863,385 @@ def new_members_report(request):
     }
     
     return render(request, 'membership/new_members_report.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def bulk_upload_members(request):
+    """Bulk upload members from Excel/CSV file"""
+    
+    if request.method == 'POST':
+        if 'file' not in request.FILES:
+            messages.error(request, 'Please select a file to upload.')
+            return redirect('membership:bulk_upload_members')
+        
+        file = request.FILES['file']
+        file_extension = file.name.split('.')[-1].lower()
+        
+        # Validate file type
+        if file_extension not in ['xlsx', 'xls', 'csv']:
+            messages.error(request, 'Invalid file format. Please upload Excel (.xlsx, .xls) or CSV file.')
+            return redirect('membership:bulk_upload_members')
+        
+        try:
+            # Read the file based on extension
+            if file_extension == 'csv':
+                df = pd.read_csv(file)
+            else:
+                df = pd.read_excel(file)
+            
+            # Process and validate data
+            success_count = 0
+            error_count = 0
+            errors = []
+            skipped_count = 0
+            auto_generated = []
+            
+            for index, row in df.iterrows():
+                try:
+                    row_auto_gen = []
+                    
+                    # Skip completely empty rows
+                    if 'name' not in row or pd.isna(row['name']) or str(row['name']).strip() == '':
+                        skipped_count += 1
+                        continue
+                    
+                    name = str(row['name']).strip()
+                    
+                    # Auto-generate phone if missing
+                    phone = None
+                    if 'phone' in row and not pd.isna(row['phone']) and str(row['phone']).strip():
+                        phone = str(row['phone']).strip()
+                        # Check if phone already exists
+                        if Member.objects.filter(phone=phone).exists():
+                            error_count += 1
+                            errors.append(f'Row {index + 2}: Phone {phone} already exists')
+                            continue
+                    else:
+                        # Generate placeholder phone (TEMP + timestamp + row number)
+                        import time
+                        phone = f"TEMP{int(time.time())}{index}"
+                        row_auto_gen.append('phone')
+                    
+                    # Parse dates
+                    date_of_birth = None
+                    if 'date_of_birth' in row and not pd.isna(row['date_of_birth']):
+                        try:
+                            date_of_birth = pd.to_datetime(row['date_of_birth']).date()
+                        except:
+                            pass
+                    
+                    join_date = timezone.now().date()
+                    if 'join_date' in row and not pd.isna(row['join_date']):
+                        try:
+                            join_date = pd.to_datetime(row['join_date']).date()
+                        except:
+                            pass
+                    
+                    citizenship_issue_date = None
+                    if 'citizenship_issue_date' in row and not pd.isna(row['citizenship_issue_date']):
+                        try:
+                            citizenship_issue_date = pd.to_datetime(row['citizenship_issue_date']).date()
+                        except:
+                            pass
+                    
+                    # Membership type
+                    membership_type = 'REGULAR'
+                    if 'membership_type' in row and not pd.isna(row['membership_type']):
+                        membership_type = str(row['membership_type']).upper().strip()
+                        if membership_type not in ['REGULAR', 'LIFETIME']:
+                            membership_type = 'REGULAR'
+                            row_auto_gen.append('membership_type')
+                    else:
+                        row_auto_gen.append('membership_type')
+                    
+                    # Gender
+                    gender = 'O'
+                    if 'gender' in row and not pd.isna(row['gender']):
+                        gender_value = str(row['gender']).upper().strip()
+                        if gender_value in ['M', 'MALE']:
+                            gender = 'M'
+                        elif gender_value in ['F', 'FEMALE']:
+                            gender = 'F'
+                        else:
+                            row_auto_gen.append('gender')
+                    else:
+                        row_auto_gen.append('gender')
+                    
+                    # Payment frequency
+                    payment_frequency = 'MONTHLY'
+                    if 'payment_frequency' in row and not pd.isna(row['payment_frequency']):
+                        freq_value = str(row['payment_frequency']).upper().strip()
+                        if freq_value in ['MONTHLY', 'QUARTERLY', 'YEARLY', 'ONE_TIME']:
+                            payment_frequency = freq_value
+                        else:
+                            row_auto_gen.append('payment_frequency')
+                    else:
+                        row_auto_gen.append('payment_frequency')
+                    
+                    # Generate membership number
+                    membership_number = None
+                    if 'membership_number' in row and not pd.isna(row['membership_number']):
+                        membership_number = str(row['membership_number']).strip()
+                        if Member.objects.filter(membership_number=membership_number).exists():
+                            membership_number = None
+                    
+                    if not membership_number:
+                        last_member = Member.objects.order_by('-id').first()
+                        if last_member and last_member.membership_number:
+                            try:
+                                last_number = int(last_member.membership_number.split('-')[-1])
+                                membership_number = f"NSS-{str(last_number + 1).zfill(3)}"
+                            except:
+                                membership_number = f"NSS-{str(Member.objects.count() + 1).zfill(3)}"
+                        else:
+                            membership_number = "NSS-001"
+                        row_auto_gen.append('membership_number')
+                    
+                    # Email
+                    email = ''
+                    if 'email' in row and not pd.isna(row['email']) and str(row['email']).strip():
+                        email = str(row['email']).strip()
+                    else:
+                        email = f"noemail.{membership_number.lower().replace('-', '')}@placeholder.com"
+                        row_auto_gen.append('email')
+                    
+                    # Address
+                    address = ''
+                    if 'address' in row and not pd.isna(row['address']) and str(row['address']).strip():
+                        address = str(row['address']).strip()
+                    else:
+                        address = 'Address not provided'
+                        row_auto_gen.append('address')
+                    
+                    # Get optional fields - use None for unique fields if empty
+                    father_name = None
+                    if 'father_name' in row and not pd.isna(row['father_name']) and str(row['father_name']).strip():
+                        father_name = str(row['father_name']).strip()
+                    
+                    grandfather_name = None
+                    if 'grandfather_name' in row and not pd.isna(row['grandfather_name']) and str(row['grandfather_name']).strip():
+                        grandfather_name = str(row['grandfather_name']).strip()
+                    
+                    spouse_name = None
+                    if 'spouse_name' in row and not pd.isna(row['spouse_name']) and str(row['spouse_name']).strip():
+                        spouse_name = str(row['spouse_name']).strip()
+                    
+                    # IMPORTANT: Use None instead of empty string for citizenship_number (unique field)
+                    citizenship_number = None
+                    if 'citizenship_number' in row and not pd.isna(row['citizenship_number']) and str(row['citizenship_number']).strip():
+                        citizenship_number = str(row['citizenship_number']).strip()
+                    
+                    citizenship_issue_district = None
+                    if 'citizenship_issue_district' in row and not pd.isna(row['citizenship_issue_district']) and str(row['citizenship_issue_district']).strip():
+                        citizenship_issue_district = str(row['citizenship_issue_district']).strip()
+                    
+                    # Create member
+                    member = Member(
+                        membership_number=membership_number,
+                        name=name,
+                        phone=phone,
+                        email=email,
+                        date_of_birth=date_of_birth,
+                        gender=gender,
+                        address=address,
+                        
+                        # Family information (use None for empty)
+                        father_name=father_name,
+                        grandfather_name=grandfather_name,
+                        spouse_name=spouse_name,
+                        
+                        # Citizenship (use None for unique field)
+                        citizenship_number=citizenship_number,
+                        citizenship_issue_date=citizenship_issue_date,
+                        citizenship_issue_district=citizenship_issue_district,
+                        
+                        # Membership
+                        membership_type=membership_type,
+                        payment_frequency=payment_frequency,
+                        join_date=join_date,
+                        is_active=True
+                    )
+                    
+                    member.save()
+                    success_count += 1
+                    
+                    if row_auto_gen:
+                        auto_generated.append({
+                            'row': index + 2,
+                            'name': name,
+                            'fields': row_auto_gen
+                        })
+                    
+                except Exception as e:
+                    error_count += 1
+                    errors.append(f'Row {index + 2}: {str(e)}')
+            
+            # Show results
+            if success_count > 0:
+                messages.success(request, f'✅ Successfully uploaded {success_count} member(s).')
+            
+            if skipped_count > 0:
+                messages.info(request, f'ℹ️ Skipped {skipped_count} empty row(s).')
+            
+            if auto_generated:
+                auto_gen_summary = []
+                for item in auto_generated[:10]:
+                    fields_str = ', '.join(item['fields'])
+                    auto_gen_summary.append(f"Row {item['row']} ({item['name']}): {fields_str}")
+                
+                auto_gen_message = '<br>'.join(auto_gen_summary)
+                if len(auto_generated) > 10:
+                    auto_gen_message += f'<br>... and {len(auto_generated) - 10} more rows'
+                
+                messages.warning(
+                    request,
+                    f'⚠️ Auto-generated placeholder data for {len(auto_generated)} member(s):<br>{auto_gen_message}<br><br>'
+                    f'<strong>Please update these fields later:</strong><br>'
+                    f'- Phone numbers starting with "TEMP"<br>'
+                    f'- Emails with "@placeholder.com"<br>'
+                    f'- Addresses saying "Address not provided"'
+                )
+            
+            if error_count > 0:
+                if len(errors) <= 10:
+                    error_list = '<br>'.join(errors)
+                else:
+                    error_list = '<br>'.join(errors[:10]) + f'<br>... and {len(errors) - 10} more'
+                
+                messages.error(request, f'❌ {error_count} row(s) failed:<br>{error_list}')
+            
+            return redirect('membership:member_list')
+            
+        except Exception as e:
+            messages.error(request, f'❌ Error processing file: {str(e)}')
+            return redirect('membership:bulk_upload_members')
+    
+    return render(request, 'membership/bulk_upload_members.html')
+
+
+@login_required
+@user_passes_test(is_admin)
+def download_template(request):
+    """Download Excel template for bulk upload"""
+    
+    # Create a new Excel workbook
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Members Template"
+    
+    # Define headers
+    headers = [
+        'name', 'phone', 'email', 'date_of_birth', 'gender',
+        'address', 'father_name', 'grandfather_name', 'spouse_name',
+        'citizenship_number', 'citizenship_issue_date', 'citizenship_issue_district',
+        'membership_type', 'join_date'
+    ]
+    
+    # Write headers
+    ws.append(headers)
+    
+    # Add sample data
+    sample_data = [
+        [
+            'John Doe',           # name
+            '9841234567',         # phone
+            'john@example.com',   # email
+            '1990-01-15',         # date_of_birth (YYYY-MM-DD)
+            'M',                  # gender (M/F/O)
+            'Kathmandu, Nepal',   # address
+            'Father Name',        # father_name
+            'Grandfather Name',   # grandfather_name
+            'Spouse Name',        # spouse_name
+            '12-34-567890',       # citizenship_number
+            '2010-05-20',         # citizenship_issue_date (YYYY-MM-DD)
+            'Kathmandu',          # citizenship_issue_district
+            'REGULAR',            # membership_type (REGULAR/LIFETIME)
+            '2024-01-01'          # join_date (YYYY-MM-DD)
+        ]
+    ]
+    
+    for row_data in sample_data:
+        ws.append(row_data)
+    
+    # Style the header row
+    for cell in ws[1]:
+        cell.font = openpyxl.styles.Font(bold=True, color="FFFFFF")
+        cell.fill = openpyxl.styles.PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+        cell.alignment = openpyxl.styles.Alignment(horizontal="center", vertical="center")
+    
+    # Add instructions sheet
+    ws_instructions = wb.create_sheet("Instructions")
+    instructions = [
+        ["Bulk Upload Instructions"],
+        [""],
+        ["Required Fields (must be filled):"],
+        ["- name: Full name of the member"],
+        ["- phone: Contact number"],
+        ["- membership_type: Either REGULAR or LIFETIME"],
+        [""],
+        ["Optional Fields:"],
+        ["- email: Email address"],
+        ["- date_of_birth: Format YYYY-MM-DD (e.g., 1990-12-31)"],
+        ["- gender: M for Male, F for Female, O for Other"],
+        ["- address: Full address"],
+        ["- father_name, grandfather_name, spouse_name: Family details"],
+        ["- citizenship_number, citizenship_issue_date, citizenship_issue_district"],
+        ["- join_date: Format YYYY-MM-DD (default: today)"],
+        [""],
+        ["Date Format:"],
+        ["All dates should be in YYYY-MM-DD format"],
+        ["Examples: 2024-12-06, 1990-01-15, 2010-05-20"],
+        [""],
+        ["Membership Type:"],
+        ["Use exactly: REGULAR or LIFETIME (case-insensitive)"],
+        [""],
+        ["Gender:"],
+        ["Use: M (Male), F (Female), or O (Other)"],
+        [""],
+        ["Tips:"],
+        ["- Delete the sample row before adding your data"],
+        ["- Do not modify the header row"],
+        ["- Leave cells empty if data is not available"],
+        ["- Phone numbers can include country code"],
+    ]
+    
+    for row in instructions:
+        ws_instructions.append(row)
+    
+    # Adjust column widths
+    for ws_temp in [ws, ws_instructions]:
+        for column in ws_temp.columns:
+            max_length = 0
+            column_letter = column[0].column_letter
+            for cell in column:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(cell.value)
+                except:
+                    pass
+            adjusted_width = min(max_length + 2, 50)
+            ws_temp.column_dimensions[column_letter].width = adjusted_width
+    
+    # Save to BytesIO
+    buffer = BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+    
+    # Create response
+    response = HttpResponse(
+        buffer.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename=members_upload_template.xlsx'
+    
+    return response
+
+
+
+
+
+
+
+
+
+

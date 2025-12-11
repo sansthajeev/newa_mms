@@ -44,4 +44,6 @@ urlpatterns = [
     path('reports/renewal-required/', views.renewal_required_report, name='renewal_required_report'),
     path('reports/membership-expiry/', views.membership_expiry_report, name='membership_expiry_report'),
     path('reports/new-members/', views.new_members_report, name='new_members_report'),
+    path('members/bulk-upload/', views.bulk_upload_members, name='bulk_upload_members'),
+    path('members/bulk-upload/template/', views.download_template, name='download_template'),
 ]

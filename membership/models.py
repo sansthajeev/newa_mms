@@ -112,6 +112,7 @@ class Member(models.Model):
     citizenship_number = models.CharField(
         max_length=50,
         unique=True,
+        null=True,
         verbose_name="Citizenship Number"
     )
     citizenship_issue_date = models.DateField(
